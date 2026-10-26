@@ -8,95 +8,101 @@
 
   html {
     scroll-behavior: smooth;
-    background-color: #000000;
-    color: #ececec;
+    background-color: #030305;
+    color: #f1f1f4;
     font-family: var(--font-sans);
   }
 
   body {
-    background-color: #000000;
-    color: #ececec;
+    background-color: #030305;
+    color: #f1f1f4;
     overflow-x: hidden;
   }
 
   h1, h2, h3, h4, .font-display {
     font-family: var(--font-display);
-    letter-spacing: -0.035em;
+    letter-spacing: -0.03em;
   }
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: #050508;
 }
 ::-webkit-scrollbar-thumb {
-  background: #222222;
+  background: #27272e;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #444444;
+  background: #3f3f4a;
 }
 
-/* Ambient Horizon Glow & Mesh */
-.horizon-gradient-hero {
-  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 70%),
-              radial-gradient(ellipse 60% 30% at 50% 100%, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0) 80%);
+/* Ambient Lighting & Glows */
+.ambient-glow-cyan {
+  background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.15), transparent 70%);
 }
 
-/* Hairline borders */
-.border-subtle {
-  border-color: rgba(255, 255, 255, 0.08);
-}
-.border-subtle-hover:hover {
-  border-color: rgba(255, 255, 255, 0.24);
+.ambient-glow-violet {
+  background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.16), transparent 70%);
 }
 
-/* Glass card */
-.glass-card {
-  background: rgba(10, 10, 10, 0.65);
+.ambient-glow-emerald {
+  background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.12), transparent 70%);
+}
+
+.ambient-glow-silver {
+  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.08), transparent 60%);
+}
+
+/* Glass Card with metallic sheen */
+.sheen-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(18, 18, 24, 0.75) 0%, rgba(10, 10, 14, 0.85) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 20px 50px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Interactive spotlight overlay */
-.spotlight-card {
-  position: relative;
-  overflow: hidden;
-}
-.spotlight-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(400px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), rgba(255, 255, 255, 0.08), transparent 40%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
-}
-.spotlight-card:hover::before {
-  opacity: 1;
+.sheen-card:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.2), 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 255, 255, 0.03);
+  transform: translateY(-2px);
 }
 
-/* Animated Horizon line pulse */
-@keyframes horizonScan {
-  0% { transform: translateY(-100%); opacity: 0; }
-  50% { opacity: 0.5; }
-  100% { transform: translateY(100%); opacity: 0; }
+/* Glowing Border Animation */
+@keyframes borderGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
 }
 
-.animate-scan {
-  animation: horizonScan 8s ease-in-out infinite;
+.animate-border-glow {
+  animation: borderGlow 4s ease-in-out infinite;
 }
 
-/* Subtle pulse glow */
-@keyframes softPulse {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.04); }
+/* Metallic Text Gradients */
+.text-metallic {
+  background: linear-gradient(180deg, #ffffff 0%, #d4d4d8 60%, #71717a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.animate-soft-pulse {
-  animation: softPulse 6s ease-in-out infinite;
+.text-silver {
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #64748b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Subtle Grid with radial mask */
+.bg-subtle-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 60%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 60%, transparent 100%);
 }

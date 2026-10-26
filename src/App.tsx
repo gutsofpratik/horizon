@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { HorizonShaderCanvas } from './components/HorizonShaderCanvas';
 import { Header } from './components/Header';
 import { AestheticHero } from './components/AestheticHero';
-import { WorkspaceShowcase } from './components/WorkspaceShowcase';
+import { ProductShowcase } from './components/ProductShowcase';
 import { LabGrid } from './components/LabGrid';
+import { InteractiveHardwareSizer } from './components/InteractiveHardwareSizer';
 import { EcosystemCards } from './components/EcosystemCards';
 import { DownloadView } from './components/DownloadView';
 import { MinimalFooter } from './components/MinimalFooter';
@@ -14,11 +15,11 @@ export function App() {
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
 
   return (
-    <div className="relative min-h-screen bg-black text-[#ECECEC] font-sans selection:bg-white selection:text-black">
-      {/* Living Ambient Horizon Shader Canvas in Background */}
+    <div className="relative min-h-screen bg-[#030305] text-[#ECECEC] font-sans selection:bg-white selection:text-black">
+      {/* Living Interactive Ambient Canvas Shader */}
       <HorizonShaderCanvas />
 
-      {/* Floating Minimal Navigation */}
+      {/* Floating Minimal Glass Header */}
       <Header
         activePage={activePage}
         setActivePage={setActivePage}
@@ -27,26 +28,29 @@ export function App() {
 
       {/* Main Experience */}
       <main className="relative z-10">
-        {/* Aesthetic Minimalist Hero */}
+        {/* Dynamic Metallic Hero */}
         <AestheticHero onOpenDownload={() => setDownloadModalOpen(true)} />
 
-        {/* The Flagship Showcase: Horizon Desktop */}
-        <WorkspaceShowcase />
+        {/* Real Horizon Workspace Showcase with actual screenshots */}
+        <ProductShowcase onOpenDownload={() => setDownloadModalOpen(true)} />
 
-        {/* The Open Source AI Lab: What We Do */}
+        {/* The Open Source AI Lab: What We Do (Model training, tools, apps) */}
         <LabGrid />
 
-        {/* The Ecosystem Trio: Horizon, Horizon-Skills, Horizon-Models */}
+        {/* Interactive Hardware Sizer & Model Matcher */}
+        <InteractiveHardwareSizer />
+
+        {/* The 3 Core Repositories of the Ecosystem */}
         <EcosystemCards />
 
-        {/* Minimalist Download View v0.3.3 */}
+        {/* Official Release Matrix v0.3.3 */}
         <DownloadView />
       </main>
 
-      {/* Minimal Editorial Footer */}
+      {/* Minimalist Editorial Footer */}
       <MinimalFooter />
 
-      {/* Clean OS Download Dialog */}
+      {/* Instant OS Download Modal */}
       <DownloadModal
         isOpen={downloadModalOpen}
         onClose={() => setDownloadModalOpen(false)}
