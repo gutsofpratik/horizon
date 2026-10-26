@@ -2,89 +2,101 @@
 
 @layer base {
   :root {
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
   html {
     scroll-behavior: smooth;
-    background-color: #050505;
-    color: #f5f5f5;
+    background-color: #000000;
+    color: #ececec;
     font-family: var(--font-sans);
   }
 
   body {
-    background-color: #050505;
-    color: #f5f5f5;
+    background-color: #000000;
+    color: #ececec;
+    overflow-x: hidden;
   }
 
-  code, pre, .font-mono {
-    font-family: var(--font-mono);
-  }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: #050505;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #222222;
-    border-radius: 3px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #3a3a3a;
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.035em;
   }
 }
 
-/* Background utilities */
-.bg-grid-pattern {
-  background-size: 36px 36px;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #222222;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #444444;
 }
 
-.bg-dot-pattern {
-  background-size: 24px 24px;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+/* Ambient Horizon Glow & Mesh */
+.horizon-gradient-hero {
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 70%),
+              radial-gradient(ellipse 60% 30% at 50% 100%, rgba(255, 255, 255, 0.04), rgba(0, 0, 0, 0) 80%);
 }
 
-.bg-radial-gradient {
-  background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.06) 0%, rgba(0, 0, 0, 0) 65%);
+/* Hairline borders */
+.border-subtle {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.border-subtle-hover:hover {
+  border-color: rgba(255, 255, 255, 0.24);
 }
 
-.hairline-border {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.hairline-b {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.hairline-t {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Glassmorphism for dark monochrome */
-.glass-panel {
-  background: rgba(12, 12, 12, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+/* Glass card */
+.glass-card {
+  background: rgba(10, 10, 10, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.glass-panel-hover {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+/* Interactive spotlight overlay */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
 }
-.glass-panel-hover:hover {
-  background: rgba(18, 18, 18, 0.9);
-  border-color: rgba(255, 255, 255, 0.22);
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(400px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), rgba(255, 255, 255, 0.08), transparent 40%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.spotlight-card:hover::before {
+  opacity: 1;
 }
 
-/* Monochromatic glow on interactive focus */
-.mono-glow {
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.07);
+/* Animated Horizon line pulse */
+@keyframes horizonScan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 0.5; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+.animate-scan {
+  animation: horizonScan 8s ease-in-out infinite;
+}
+
+/* Subtle pulse glow */
+@keyframes softPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.04); }
+}
+
+.animate-soft-pulse {
+  animation: softPulse 6s ease-in-out infinite;
 }
