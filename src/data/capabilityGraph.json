@@ -1,0 +1,635 @@
+{
+  "nodes": [
+    {
+      "id": "claude",
+      "label": {
+        "expression": "null"
+      },
+      "x": 705.6,
+      "y": 338.4,
+      "mx": 180,
+      "my": 40,
+      "tx": 378,
+      "ty": 380
+    },
+    {
+      "id": "whatyouget",
+      "label": "Get it done",
+      "tier": "p",
+      "x": 465.3,
+      "y": 144.9,
+      "mx": 150,
+      "my": 147,
+      "tx": 249,
+      "ty": 163
+    },
+    {
+      "id": "howreaches",
+      "label": "Access tools",
+      "tier": "p",
+      "x": 932.8,
+      "y": 122.7,
+      "mx": 265,
+      "my": 355,
+      "tx": 500,
+      "ty": 138
+    },
+    {
+      "id": "makeyours",
+      "label": "Make it yours",
+      "tier": "p",
+      "x": 1070.3,
+      "y": 340,
+      "mx": 105,
+      "my": 486,
+      "tx": 573,
+      "ty": 382
+    },
+    {
+      "id": "staycontrol",
+      "label": "Stay in control",
+      "tier": "p",
+      "x": 998,
+      "y": 513.6,
+      "mx": 255,
+      "my": 595,
+      "tx": 535,
+      "ty": 576
+    },
+    {
+      "id": "wherelives",
+      "label": "Work where you want",
+      "tier": "p",
+      "x": 704.8,
+      "y": 603.6,
+      "mx": 100,
+      "my": 741,
+      "mWrapWidth": 90,
+      "tx": 378,
+      "ty": 677
+    },
+    {
+      "id": "itknows",
+      "label": "Don’t start over",
+      "tier": "p",
+      "x": 388.8,
+      "y": 534.6,
+      "mx": 245,
+      "my": 834,
+      "tx": 208,
+      "ty": 600
+    },
+    {
+      "id": "quick",
+      "label": "Quick answers or long tasks",
+      "tier": "s",
+      "parents": [
+        "whatyouget"
+      ],
+      "x": 218.2,
+      "y": 56.2,
+      "mx": 80,
+      "my": 97,
+      "mWrapWidth": 90,
+      "tx": 117,
+      "ty": 63
+    },
+    {
+      "id": "parallel",
+      "label": "Parallel tasks",
+      "tier": "s",
+      "parents": [
+        "whatyouget"
+      ],
+      "x": 497.8,
+      "y": 31.7,
+      "mx": 240,
+      "my": 87,
+      "tx": 267,
+      "ty": 36
+    },
+    {
+      "id": "intelligence",
+      "label": "Frontier intelligence",
+      "tier": "s",
+      "parents": [
+        "whatyouget"
+      ],
+      "x": 165.5,
+      "y": 150.8,
+      "mx": 131,
+      "my": 272,
+      "mWrapWidth": 65,
+      "tx": 89,
+      "ty": 169
+    },
+    {
+      "id": "routines",
+      "label": "Scheduled tasks",
+      "tier": "s",
+      "parents": [
+        "whatyouget"
+      ],
+      "x": 178.5,
+      "y": 234.3,
+      "mx": 45,
+      "my": 183,
+      "mWrapWidth": 60,
+      "tx": 96,
+      "ty": 263
+    },
+    {
+      "id": "voice",
+      "label": "Voice",
+      "tier": "s",
+      "parents": [
+        "whatyouget"
+      ],
+      "x": 517.3,
+      "y": 301.1,
+      "mx": 40,
+      "my": 132,
+      "tx": 277,
+      "ty": 338
+    },
+    {
+      "id": "finished",
+      "label": "Finished, editable work",
+      "tier": "s",
+      "parents": [
+        "whatyouget"
+      ],
+      "x": 233.4,
+      "y": 306.6,
+      "mx": 285,
+      "my": 124,
+      "mWrapWidth": 90,
+      "tx": 125,
+      "ty": 344
+    },
+    {
+      "id": "artifacts",
+      "label": "Artifacts",
+      "tier": "s",
+      "parents": [
+        "whatyouget"
+      ],
+      "x": 326.4,
+      "y": 401.2,
+      "mx": 254,
+      "my": 201,
+      "tx": 175,
+      "ty": 450
+    },
+    {
+      "id": "interactive",
+      "label": "Interactive visuals",
+      "tier": "s",
+      "parents": [
+        "whatyouget"
+      ],
+      "x": 436.5,
+      "y": 437.5,
+      "mx": 300,
+      "my": 166,
+      "mWrapWidth": 75,
+      "tx": 226,
+      "ty": 491
+    },
+    {
+      "id": "theweb",
+      "label": "The web",
+      "tier": "s",
+      "parents": [
+        "howreaches"
+      ],
+      "x": 825.2,
+      "y": 33.9,
+      "mx": 42,
+      "my": 288,
+      "tx": 442,
+      "ty": 38
+    },
+    {
+      "id": "connectors",
+      "label": "Connectors",
+      "tier": "s",
+      "parents": [
+        "howreaches"
+      ],
+      "x": 965.2,
+      "y": 28.3,
+      "mx": 85,
+      "my": 327,
+      "tx": 517,
+      "ty": 32
+    },
+    {
+      "id": "filesfolders",
+      "label": "Files and folders",
+      "tier": "s",
+      "parents": [
+        "howreaches"
+      ],
+      "x": 1155,
+      "y": 69.1,
+      "mx": 80,
+      "my": 382,
+      "tx": 619,
+      "ty": 78
+    },
+    {
+      "id": "browseruse",
+      "label": "Browser use",
+      "tier": "s",
+      "parents": [
+        "howreaches"
+      ],
+      "x": 1201.5,
+      "y": 139.6,
+      "mx": 110,
+      "my": 354,
+      "tx": 644,
+      "ty": 157
+    },
+    {
+      "id": "computeruse",
+      "label": "Computer use",
+      "tier": "s",
+      "parents": [
+        "howreaches"
+      ],
+      "x": 1179.6,
+      "y": 212,
+      "mx": 95,
+      "my": 411,
+      "tx": 632,
+      "ty": 238
+    },
+    {
+      "id": "skills",
+      "label": "Skills",
+      "tier": "s",
+      "parents": [
+        "makeyours"
+      ],
+      "x": 1144.5,
+      "y": 276.5,
+      "mx": 240,
+      "my": 453,
+      "tx": 613,
+      "ty": 310
+    },
+    {
+      "id": "plugins",
+      "label": "Plugins",
+      "tier": "s",
+      "parents": [
+        "makeyours"
+      ],
+      "x": 1270.5,
+      "y": 357.5,
+      "mx": 268,
+      "my": 489,
+      "tx": 681,
+      "ty": 401
+    },
+    {
+      "id": "customconn",
+      "label": "Custom connectors and MCPs",
+      "tier": "s",
+      "parents": [
+        "makeyours"
+      ],
+      "x": 1292,
+      "y": 433.1,
+      "mx": 275,
+      "my": 525,
+      "mWrapWidth": 108,
+      "tx": 692,
+      "ty": 486,
+      "tWrapWidth": 140
+    },
+    {
+      "id": "permissions",
+      "label": "Permissions control",
+      "tier": "s",
+      "parents": [
+        "staycontrol"
+      ],
+      "x": 1031.5,
+      "y": 458.1,
+      "mx": 82,
+      "my": 562,
+      "mWrapWidth": 80,
+      "tx": 553,
+      "ty": 514
+    },
+    {
+      "id": "accessctl",
+      "label": "Access controls",
+      "tier": "s",
+      "parents": [
+        "staycontrol"
+      ],
+      "x": 1253.5,
+      "y": 511.1,
+      "mx": 78,
+      "my": 597,
+      "tx": 672,
+      "ty": 574
+    },
+    {
+      "id": "admin",
+      "label": "Administrative tools for Team and Enterprise",
+      "tier": "s",
+      "parents": [
+        "staycontrol"
+      ],
+      "x": 1200,
+      "y": 599.1,
+      "wrapWidth": 168,
+      "mx": 92,
+      "my": 646,
+      "mWrapWidth": 100,
+      "tx": 643,
+      "ty": 672,
+      "tWrapWidth": 140
+    },
+    {
+      "id": "runswhere",
+      "label": "Cloud providers",
+      "tier": "s",
+      "parents": [
+        "staycontrol"
+      ],
+      "x": 927.5,
+      "y": 601.5,
+      "mx": 290,
+      "my": 642,
+      "tx": 503,
+      "ty": 675
+    },
+    {
+      "id": "webdesktop",
+      "label": "Desktop, web, mobile",
+      "tier": "s",
+      "parents": [
+        "wherelives"
+      ],
+      "x": 534.5,
+      "y": 674.1,
+      "mx": 272,
+      "my": 694,
+      "mWrapWidth": 90,
+      "tx": 286,
+      "ty": 735
+    },
+    {
+      "id": "chrome",
+      "label": "Claude in Chrome",
+      "tier": "s",
+      "parents": [
+        "wherelives"
+      ],
+      "x": 719.8,
+      "y": 690.1,
+      "mx": 265,
+      "my": 733,
+      "tx": 386,
+      "ty": 770
+    },
+    {
+      "id": "m365",
+      "label": "Claude for Microsoft 365",
+      "tier": "s",
+      "parents": [
+        "wherelives"
+      ],
+      "x": 933,
+      "y": 669.1,
+      "mx": 270,
+      "my": 798,
+      "mWrapWidth": 95,
+      "tx": 512,
+      "ty": 751
+    },
+    {
+      "id": "claudetag",
+      "label": "Claude Tag",
+      "tier": "s",
+      "parents": [
+        "wherelives"
+      ],
+      "x": 815,
+      "y": 638,
+      "mx": 268,
+      "my": 763,
+      "tx": 672,
+      "ty": 730
+    },
+    {
+      "id": "memory",
+      "label": "Memory",
+      "tier": "s",
+      "parents": [
+        "itknows"
+      ],
+      "x": 187.4,
+      "y": 601.6,
+      "mx": 70,
+      "my": 807,
+      "tx": 100,
+      "ty": 675
+    },
+    {
+      "id": "projects",
+      "label": "Projects",
+      "tier": "s",
+      "parents": [
+        "itknows"
+      ],
+      "x": 287.6,
+      "y": 618.3,
+      "mx": 88,
+      "my": 837,
+      "tx": 154,
+      "ty": 703
+    },
+    {
+      "id": "globalinstr",
+      "label": "Instructions for Claude",
+      "tier": "s",
+      "parents": [
+        "itknows"
+      ],
+      "x": 352,
+      "y": 679.6,
+      "mx": 95,
+      "my": 870,
+      "tx": 189,
+      "ty": 763
+    }
+  ],
+  "edges": [
+    {
+      "a": "claude",
+      "b": "whatyouget"
+    },
+    {
+      "a": "claude",
+      "b": "howreaches",
+      "layer": "d"
+    },
+    {
+      "a": "claude",
+      "b": "makeyours",
+      "layer": "d"
+    },
+    {
+      "a": "claude",
+      "b": "staycontrol",
+      "layer": "d"
+    },
+    {
+      "a": "claude",
+      "b": "wherelives",
+      "layer": "d"
+    },
+    {
+      "a": "claude",
+      "b": "itknows",
+      "layer": "d"
+    },
+    {
+      "a": "whatyouget",
+      "b": "howreaches"
+    },
+    {
+      "a": "howreaches",
+      "b": "makeyours"
+    },
+    {
+      "a": "makeyours",
+      "b": "staycontrol",
+      "layer": "m"
+    },
+    {
+      "a": "staycontrol",
+      "b": "wherelives",
+      "layer": "m"
+    },
+    {
+      "a": "itknows",
+      "b": "wherelives"
+    },
+    {
+      "a": "whatyouget",
+      "b": "quick"
+    },
+    {
+      "a": "whatyouget",
+      "b": "parallel"
+    },
+    {
+      "a": "whatyouget",
+      "b": "intelligence"
+    },
+    {
+      "a": "whatyouget",
+      "b": "routines"
+    },
+    {
+      "a": "whatyouget",
+      "b": "voice"
+    },
+    {
+      "a": "whatyouget",
+      "b": "finished"
+    },
+    {
+      "a": "whatyouget",
+      "b": "artifacts"
+    },
+    {
+      "a": "artifacts",
+      "b": "interactive"
+    },
+    {
+      "a": "howreaches",
+      "b": "theweb"
+    },
+    {
+      "a": "howreaches",
+      "b": "connectors"
+    },
+    {
+      "a": "howreaches",
+      "b": "filesfolders"
+    },
+    {
+      "a": "howreaches",
+      "b": "browseruse"
+    },
+    {
+      "a": "howreaches",
+      "b": "computeruse"
+    },
+    {
+      "a": "itknows",
+      "b": "memory"
+    },
+    {
+      "a": "itknows",
+      "b": "projects"
+    },
+    {
+      "a": "itknows",
+      "b": "globalinstr"
+    },
+    {
+      "a": "wherelives",
+      "b": "webdesktop"
+    },
+    {
+      "a": "wherelives",
+      "b": "chrome"
+    },
+    {
+      "a": "wherelives",
+      "b": "m365"
+    },
+    {
+      "a": "wherelives",
+      "b": "claudetag"
+    },
+    {
+      "a": "makeyours",
+      "b": "skills"
+    },
+    {
+      "a": "makeyours",
+      "b": "plugins"
+    },
+    {
+      "a": "makeyours",
+      "b": "customconn"
+    },
+    {
+      "a": "staycontrol",
+      "b": "permissions"
+    },
+    {
+      "a": "staycontrol",
+      "b": "accessctl"
+    },
+    {
+      "a": "staycontrol",
+      "b": "admin"
+    },
+    {
+      "a": "staycontrol",
+      "b": "runswhere"
+    }
+  ]
+}

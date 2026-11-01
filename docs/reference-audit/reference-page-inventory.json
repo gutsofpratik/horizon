@@ -1,0 +1,196 @@
+{
+  "count": 101,
+  "groups": {
+    "anthropic:news": [
+      "https://www.anthropic.com/news",
+      "https://www.anthropic.com/news/announcements",
+      "https://www.anthropic.com/news/policy",
+      "https://www.anthropic.com/news/announcing-our-updated-responsible-scaling-policy"
+    ],
+    "anthropic:home": [
+      "https://www.anthropic.com"
+    ],
+    "anthropic:search": [
+      "https://www.anthropic.com/search"
+    ],
+    "anthropic:research": [
+      "https://www.anthropic.com/research/team/alignment",
+      "https://www.anthropic.com/research",
+      "https://www.anthropic.com/research/team/interpretability",
+      "https://www.anthropic.com/research/team/economics",
+      "https://www.anthropic.com/research/team/frontier-red-team",
+      "https://www.anthropic.com/research/team/societal-impacts"
+    ],
+    "anthropic:engineering": [
+      "https://www.anthropic.com/engineering"
+    ],
+    "anthropic:science": [
+      "https://www.anthropic.com/science"
+    ],
+    "anthropic:institute": [
+      "https://www.anthropic.com/institute"
+    ],
+    "anthropic:policy": [
+      "https://www.anthropic.com/policy"
+    ],
+    "anthropic:policy-on-the-ai-exponential": [
+      "https://www.anthropic.com/policy-on-the-ai-exponential"
+    ],
+    "anthropic:constitution": [
+      "https://www.anthropic.com/constitution"
+    ],
+    "anthropic:beneficial-deployments": [
+      "https://www.anthropic.com/beneficial-deployments"
+    ],
+    "anthropic:responsible-scaling-policy": [
+      "https://www.anthropic.com/responsible-scaling-policy",
+      "https://www.anthropic.com/responsible-scaling-policy/roadmap"
+    ],
+    "anthropic:transparency": [
+      "https://www.anthropic.com/transparency"
+    ],
+    "anthropic:threat-intelligence": [
+      "https://www.anthropic.com/threat-intelligence"
+    ],
+    "anthropic:company": [
+      "https://www.anthropic.com/company",
+      "https://www.anthropic.com/company/leadership"
+    ],
+    "anthropic:public-benefit-report": [
+      "https://www.anthropic.com/public-benefit-report"
+    ],
+    "anthropic:careers": [
+      "https://www.anthropic.com/careers"
+    ],
+    "anthropic:events": [
+      "https://www.anthropic.com/events"
+    ],
+    "anthropic:claude-corps": [
+      "https://www.anthropic.com/claude-corps"
+    ],
+    "anthropic:economic-futures": [
+      "https://www.anthropic.com/economic-futures"
+    ],
+    "claude:home": [
+      "https://claude.com"
+    ],
+    "claude:product": [
+      "https://claude.com/product/overview",
+      "https://claude.com/product/claude-code",
+      "https://claude.com/product/cowork",
+      "https://claude.com/product/claude-duet",
+      "https://claude.com/product/tag",
+      "https://claude.com/product/claude-security",
+      "https://claude.com/product/claude-science",
+      "https://claude.com/product/design",
+      "https://claude.com/product/claude-code/enterprise"
+    ],
+    "claude:features": [
+      "https://claude.com/features/artifacts"
+    ],
+    "claude:marketplace": [
+      "https://claude.com/marketplace/connectors-plugins",
+      "https://claude.com/marketplace/plugins",
+      "https://claude.com/marketplace",
+      "https://claude.com/marketplace/service-partners"
+    ],
+    "claude:skills": [
+      "https://claude.com/skills"
+    ],
+    "claude:claude-in-chrome": [
+      "https://claude.com/claude-in-chrome"
+    ],
+    "claude:claude-for-google-workspace": [
+      "https://claude.com/claude-for-google-workspace"
+    ],
+    "claude:claude-for-microsoft-365": [
+      "https://claude.com/claude-for-microsoft-365"
+    ],
+    "anthropic:claude": [
+      "https://www.anthropic.com/claude/mythos",
+      "https://www.anthropic.com/claude/opus",
+      "https://www.anthropic.com/claude/sonnet",
+      "https://www.anthropic.com/claude/haiku"
+    ],
+    "claude:import-memory": [
+      "https://claude.com/import-memory"
+    ],
+    "claude:download": [
+      "https://claude.com/download"
+    ],
+    "claude:platform": [
+      "https://claude.com/platform/api",
+      "https://claude.com/platform/claude-managed-agents"
+    ],
+    "claude:community": [
+      "https://claude.com/community"
+    ],
+    "claude:solutions": [
+      "https://claude.com/solutions/enterprise",
+      "https://claude.com/solutions/agents",
+      "https://claude.com/solutions/coding",
+      "https://claude.com/solutions/commerce",
+      "https://claude.com/solutions/customer-support",
+      "https://claude.com/solutions/cybersecurity",
+      "https://claude.com/solutions/legal",
+      "https://claude.com/solutions/sales",
+      "https://claude.com/solutions/financial-advisors",
+      "https://claude.com/solutions/financial-services",
+      "https://claude.com/solutions/government",
+      "https://claude.com/solutions/healthcare",
+      "https://claude.com/solutions/education",
+      "https://claude.com/solutions/teachers",
+      "https://claude.com/solutions/life-sciences",
+      "https://claude.com/solutions/nonprofits",
+      "https://claude.com/solutions/small-business"
+    ],
+    "claude:customers": [
+      "https://claude.com/customers"
+    ],
+    "claude:contact-sales": [
+      "https://claude.com/contact-sales"
+    ],
+    "claude:resources": [
+      "https://claude.com/resources",
+      "https://claude.com/resources/articles",
+      "https://claude.com/resources/webinars"
+    ],
+    "claude:pricing": [
+      "https://claude.com/pricing"
+    ],
+    "claude:programs": [
+      "https://claude.com/programs/campus",
+      "https://claude.com/programs/frontier-academy",
+      "https://claude.com/programs/team-plan-for-scientists",
+      "https://claude.com/programs/startups"
+    ],
+    "claude:partners": [
+      "https://claude.com/partners/claude-on-aws",
+      "https://claude.com/partners/google-cloud",
+      "https://claude.com/partners/microsoft-foundry",
+      "https://claude.com/partners",
+      "https://claude.com/partners/powered-by-claude"
+    ],
+    "anthropic:legal": [
+      "https://www.anthropic.com/legal/supported-regions",
+      "https://www.anthropic.com/legal/privacy",
+      "https://www.anthropic.com/legal/commercial-terms",
+      "https://www.anthropic.com/legal/consumer-terms",
+      "https://www.anthropic.com/legal/k12-terms",
+      "https://www.anthropic.com/legal/k12-dpa",
+      "https://www.anthropic.com/legal/aup"
+    ],
+    "claude:check-files": [
+      "https://claude.com/check-files"
+    ],
+    "claude:regional-compliance": [
+      "https://claude.com/regional-compliance"
+    ],
+    "claude:form": [
+      "https://claude.com/form/anthropic-content-reporting"
+    ],
+    "anthropic:responsible-disclosure-policy": [
+      "https://www.anthropic.com/responsible-disclosure-policy"
+    ]
+  }
+}

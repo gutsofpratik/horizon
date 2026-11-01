@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<!--
+  JD CHECK — HR row 10 of the role-artifacts spec sheet (locked 2026-08-29).
+  Chrome (CSS, WordViewer engine, redline layout) lifted verbatim from
+  site/public/loom/contract-redline.html; content is new. Single file,
+  self-contained, iframe-loadable.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sr-pm-jd-draft — checked</title>
+    <style>
+      :root { color-scheme: light; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; }
+      body {
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        line-height: 1.5;
+        /* Default: clip overflow. The frame below switches to scroll
+           when the scaled-mode container query kicks in. */
+        overflow: hidden;
+      }
+
+      /* ----- Scale frame -----
+         Acts as the scroll container when the artifact renders at a fixed
+         natural size and is scaled down. A container query lets the scaled
+         mode kick in based on the parent's width, not the viewport. */
+      .doc-scale-frame {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        container-type: inline-size;
+      }
+
+      /* ----- Word chrome (matches PPT / Excel viewer style) ----- */
+      .doc-app {
+        background: #f3f2f1;
+        overflow: hidden;
+        border-radius: 8px;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        /* Pinned to desktop size — chrome stays constant until the
+           scaled-mode container query takes over. */
+        font-size: 14px;
+        transform-origin: top left;
+      }
+
+      /* ----- Scaled mode: <= 400px container width -----
+         Pin a natural design footprint, scale it 80%, and let the frame
+         scroll for anything that doesn't fit. */
+      @container (max-width: 400px) {
+        .doc-scale-frame {
+          overflow: hidden;
+        }
+        .doc-app {
+          /* width + height set by JS so visual fills the container at
+             a fixed 0.9 scale; chrome layout adapts to the available
+             width the same way it does above the breakpoint. */
+          transform: scale(0.9);
+        }
+      }
+      .doc-titlebar {
+        display: flex;
+        align-items: center;
+        padding: 0.7em 1em;
+        background: #2b579a;
+        gap: 0.8em;
+      }
+      .doc-titlebar-icon {
+        width: 1.4em;
+        height: 1.4em;
+        background: white;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8em;
+        color: #2b579a;
+      }
+      .doc-titlebar-text {
+        flex: 1;
+        color: white;
+        font-size: 0.9em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .doc-main {
+        display: flex;
+        background: #e1dfdd;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      /* ----- Outline (Navigation pane) panel ----- */
+      .doc-outline-panel {
+        width: min(13em, 22%);
+        background: #f3f2f1;
+        border-right: 1px solid #d2d0ce;
+        padding: 0.6em 0.6em 0.6em 0.6em;
+        display: flex;
+        flex-direction: column;
+        gap: 0.1em;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #a19f9d transparent;
+        transition: width 0.25s ease, padding 0.25s ease;
+        flex-shrink: 0;
+        container-type: inline-size;
+      }
+      .doc-outline-panel::-webkit-scrollbar { width: 4px; }
+      .doc-outline-panel::-webkit-scrollbar-track { background: transparent; }
+      .doc-outline-panel::-webkit-scrollbar-thumb { background: #a19f9d; border-radius: 2px; }
+      .doc-outline-panel.collapsed {
+        width: 2.4em;
+        padding: 0.6em 0.3em;
+      }
+      .doc-outline-panel.collapsed .doc-outline-title,
+      .doc-outline-panel.collapsed .doc-outline-item {
+        display: none;
+      }
+      .doc-outline-panel.collapsed .doc-outline-header {
+        justify-content: center;
+        padding: 0;
+        margin: 0;
+        border-bottom: none;
+      }
+
+      .doc-outline-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.4em;
+        padding: 0.1em 0.2em 0.5em 0.4em;
+        margin-bottom: 0.3em;
+        border-bottom: 1px solid #e1dfdd;
+        flex-shrink: 0;
+      }
+      .doc-outline-title {
+        font-size: 0.8em;
+        font-weight: 600;
+        color: #2b579a;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .doc-outline-toggle {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #605e5c;
+        padding: 0.2em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 3px;
+        flex-shrink: 0;
+        transition: background 0.1s ease, transform 0.25s ease;
+      }
+      .doc-outline-toggle:hover { background: #e8e8e8; color: #2b579a; }
+      .doc-outline-toggle svg { width: 1.1em; height: 1.1em; }
+      .doc-outline-panel.collapsed .doc-outline-toggle { transform: rotate(180deg); }
+
+      .doc-outline-item {
+        font-size: clamp(0.7em, 7cqw, 0.85em);
+        color: #323130;
+        padding: 0.35em 0.6em;
+        border-radius: 3px;
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: background 0.1s ease, color 0.1s ease;
+      }
+      .doc-outline-item:hover { background: #e8e8e8; }
+      .doc-outline-item.active {
+        background: #eaf1fb;
+        color: #2b579a;
+        font-weight: 600;
+        padding-left: 0.3em;
+        padding-right: 0.3em;
+      }
+      .doc-outline-item[data-level="2"] { padding-left: 1.5em; font-size: clamp(0.7em, 6.5cqw, 0.8em); }
+      .doc-outline-item[data-level="3"] { padding-left: 2.5em; font-size: clamp(0.7em, 6cqw, 0.78em); color: #605e5c; }
+
+      /* ----- Pages area (scrolls vertically) ----- */
+      .doc-pages-area {
+        flex: 1;
+        padding: 1.2em 1em;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1em;
+        scrollbar-width: thin;
+        scrollbar-color: #a19f9d transparent;
+      }
+      .doc-pages-area::-webkit-scrollbar { width: 6px; }
+      .doc-pages-area::-webkit-scrollbar-track { background: transparent; }
+      .doc-pages-area::-webkit-scrollbar-thumb { background: #a19f9d; border-radius: 3px; }
+
+      .doc-page-frame {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        aspect-ratio: 816 / 1056; /* US letter portrait */
+        background: white;
+        box-shadow: 0 0.15em 0.5em rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      /* ----- Page canvas -----
+         Every page is rendered at a fixed 816 x 1056 design size
+         (US letter at 96dpi). The frame creates a letter-sized box and
+         scales the page via CSS transform to fit. Authors size content
+         in px against this canvas — same numbers Word uses. */
+      .doc-page {
+        width: 816px;
+        height: 1056px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: top left;
+        background: #ffffff;
+        color: #1f1f1f;
+        padding: 96px 96px; /* ~1in margins at 96dpi */
+        font-family: "Calibri", "Segoe UI", -apple-system, Roboto, sans-serif;
+        font-size: 22px; /* ≈11pt */
+        line-height: 1.5;
+        overflow: hidden;
+      }
+
+      /* ----- Base typography inside a page -----
+         Headings follow Word's default Office theme (Calibri Light,
+         never semibold; #2F5496 for H1/H2, #1F3763 for H3) — semibold
+         web headings read as a designed page, not .docx output. */
+      .doc-page h1 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 56px;
+        font-weight: 600;
+        color: #141413;
+        line-height: 1.15;
+        margin-bottom: 18px;
+      }
+      .doc-page h2 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 36px;
+        font-weight: 600;
+        color: #141413;
+        line-height: 1.2;
+        margin-top: 28px;
+        margin-bottom: 12px;
+      }
+      .doc-page h3 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 28px;
+        font-weight: 600;
+        color: #141413;
+        line-height: 1.3;
+        margin-top: 22px;
+        margin-bottom: 10px;
+      }
+      .doc-page h4 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 22px;
+        font-weight: 400;
+        color: #444;
+        font-style: italic;
+        margin-top: 18px;
+        margin-bottom: 8px;
+      }
+      .doc-page p { margin-bottom: 14px; }
+      .doc-page p + p { margin-top: -2px; }
+      .doc-page ul, .doc-page ol { margin: 0 0 14px 40px; }
+      .doc-page li { margin-bottom: 6px; }
+      /* Word's built-in Quote style: indented italic gray. No border
+         or shaded box — those are web-callout grammar. */
+      .doc-page blockquote {
+        margin: 14px 0 14px 48px;
+        color: #404040;
+        font-style: italic;
+      }
+      .doc-page blockquote .doc-quote-source {
+        display: block;
+        margin-top: 6px;
+        font-style: normal;
+        font-size: 19px;
+        color: #605e5c;
+      }
+      .doc-page hr {
+        border: none;
+        border-top: 1px solid #d2d0ce;
+        margin: 20px 0;
+      }
+      .doc-page a { color: #0563c1; text-decoration: underline; }
+      .doc-page code {
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 0.92em;
+      }
+      .doc-page table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 14px 0;
+        font-size: 20px;
+      }
+      /* Default "Table Grid": thin uniform borders, bold unfilled
+         header, no banding — filled/zebra tables are a styled theme
+         Word only applies when asked. */
+      .doc-page th, .doc-page td {
+        border: 1px solid #808080;
+        padding: 8px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .doc-page th {
+        font-weight: 700; background: #e8edf2; color: #141413;
+      }
+
+      /* Page-number footer (optional, auto-inserted) */
+      .doc-page-number {
+        position: absolute;
+        bottom: 40px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 16px;
+        color: #a19f9d;
+      }
+
+      /* ----- Built-in page layouts -----
+         Apply via data-layout="..." on a .doc-page. All sizes are px
+         against the 816x1056 canvas. */
+      .doc-page[data-layout="letterhead"] {
+        padding-top: 200px;
+      }
+      .doc-page[data-layout="letterhead"]::before {
+        content: attr(data-letterhead);
+        position: absolute;
+        top: 70px;
+        left: 96px;
+        right: 96px;
+        font-size: 32px;
+        font-weight: 600;
+        color: #2b579a;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #2b579a;
+      }
+
+      .doc-page[data-layout="cover"] {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 140px 96px;
+        background: linear-gradient(180deg, #2b579a 0%, #1a3e74 100%);
+        color: white;
+      }
+      .doc-page[data-layout="cover"] h1 {
+        font-size: 72px;
+        font-weight: 700;
+        color: white;
+        line-height: 1.1;
+        margin-bottom: 24px;
+      }
+      .doc-page[data-layout="cover"] .doc-subtitle {
+        font-size: 30px;
+        font-weight: 400;
+        opacity: 0.9;
+        margin-bottom: 60px;
+      }
+      .doc-page[data-layout="cover"] .doc-meta {
+        font-size: 20px;
+        opacity: 0.8;
+        line-height: 1.8;
+      }
+
+      .doc-page[data-layout="memo"] {
+        padding: 96px;
+      }
+      /* Memo head as Word would write it: plain "To: / From:" bold-label
+         lines in body ink, closed by a thin bottom-border rule — not a
+         colored small-caps label grid. */
+      .doc-page[data-layout="memo"] .doc-memo-header {
+        font-size: 20px;
+        margin-bottom: 24px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #d2d0ce;
+      }
+      .doc-page[data-layout="memo"] .doc-memo-header dt {
+        float: left;
+        clear: left;
+        font-weight: 700;
+        margin-right: 8px;
+      }
+      .doc-page[data-layout="memo"] .doc-memo-header dt::after { content: ":"; }
+      .doc-page[data-layout="memo"] .doc-memo-header dd {
+        color: #1f1f1f;
+        margin: 0 0 2px 0;
+      }
+
+      /* ----- Bottom bar ----- */
+      .doc-bottombar {
+        display: flex;
+        align-items: center;
+        padding: 0.4em 0.8em;
+        background: #f3f2f1;
+        border-top: 1px solid #d2d0ce;
+        font-size: 0.8em;
+        color: #605e5c;
+        gap: 1em;
+      }
+      .doc-page-counter { flex: 0 0 auto; }
+      .doc-word-count {
+        flex: 1;
+        text-align: right;
+        color: #605e5c;
+      }
+      /* ══════════════════════════════════════════════════════════════
+         TRACKED-CHANGES LAYOUT — data-layout="redline"
+         Word's All Markup view: the text column narrows, a comment
+         gutter opens on the right, edited paragraphs carry a change bar,
+         insertions are underlined and deletions struck in the reviewer's
+         colour. Balloons are positioned by px `top` against the fixed
+         816x1056 page canvas — the same authoring model the rest of the
+         doc layouts use, so a balloon lands exactly where it is put.
+         ══════════════════════════════════════════════════════════════ */
+      .doc-page[data-layout="redline"] {
+        --rl-author: #9b2f6f;      /* one reviewer, one colour, both marks */
+        --rl-gutter: 214px;
+        padding: 92px var(--rl-gutter) 64px 80px;
+        font-size: 18px;
+        line-height: 1.62;
+      }
+
+      /* Markup-view banner: which view, whose marks. */
+      .doc-page[data-layout="redline"] .rl-viewbar {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 20px;
+        background: #f3f2f1;
+        border-bottom: 1px solid #d2d0ce;
+        font-size: 14px; color: #605e5c;
+      }
+      .doc-page[data-layout="redline"] .rl-viewbar strong { color: var(--rl-author); font-weight: 600; }
+
+      .doc-page[data-layout="redline"] h2 { font-size: 26px; margin-top: 22px; margin-bottom: 8px; }
+      .doc-page[data-layout="redline"] h3 { font-size: 20px; margin-top: 18px; margin-bottom: 6px; }
+      .doc-page[data-layout="redline"] p { margin-bottom: 12px; }
+      .doc-page[data-layout="redline"] ul,
+      .doc-page[data-layout="redline"] ol { margin: 0 0 12px 30px; }
+      .doc-page[data-layout="redline"] li { margin-bottom: 5px; }
+
+      /* Change bar — Word's vertical rule in the left margin. */
+      .doc-page[data-layout="redline"] .rl-changed {
+        position: relative;
+        padding-left: 14px;
+      }
+      .doc-page[data-layout="redline"] .rl-changed::before {
+        content: "";
+        position: absolute; left: -14px; top: 2px; bottom: 2px;
+        width: 2px; background: #4a4a4a;
+      }
+      /* Change bar on a list item — same rule, inside the list indent. */
+      .doc-page[data-layout="redline"] li.rl-changed { padding-left: 0; }
+      .doc-page[data-layout="redline"] li.rl-changed::before {
+        left: -30px;
+      }
+
+      .rl-ins { color: var(--rl-author); text-decoration: underline; }
+      .rl-del { color: var(--rl-author); text-decoration: line-through; }
+
+      /* Comment balloon in the right gutter. */
+      .doc-page[data-layout="redline"] .rl-balloon {
+        position: absolute;
+        right: 22px;
+        width: 172px;
+        background: #fdf6fa;
+        border: 1px solid #e3c3d6;
+        border-left: 3px solid var(--rl-author);
+        /* square: legacy All-Markup balloons have no corner radius (Skylar 9/11) */
+        padding: 9px 11px;
+        font-size: 13px;
+        line-height: 1.45;
+        color: #3a2b34;
+      }
+      .doc-page[data-layout="redline"] .rl-balloon .rl-who {
+        display: block;
+        font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+        color: var(--rl-author); font-weight: 600; margin-bottom: 4px;
+      }
+      .doc-page[data-layout="redline"] .rl-balloon.is-open {
+        background: #fffaf0; border-color: #e4cd9a; border-left-color: #b7791f;
+        color: #5a4715;
+      }
+      .doc-page[data-layout="redline"] .rl-balloon.is-open .rl-who { color: #b7791f; }
+      /* Leader line from the balloon back to the text column. */
+      .doc-page[data-layout="redline"] .rl-balloon::before {
+        content: "";
+        position: absolute; left: -26px; top: 14px;
+        width: 23px; border-top: 1px dashed #c9a8bb;
+      }
+
+      /* Cover block on page 1 of a markup document. */
+      .doc-page[data-layout="redline"] .rl-cover {
+        border-bottom: 2px solid var(--rl-author);
+        padding-bottom: 14px; margin-bottom: 6px;
+      }
+      .doc-page[data-layout="redline"] .rl-cover h1 { font-size: 34px; margin-bottom: 6px; }
+      .doc-page[data-layout="redline"] .rl-cover .rl-cover-meta { font-size: 15px; color: #605e5c; }
+      /* Authored status line, not a badge: plain bold body ink — the
+         reviewer colour belongs only to the tracked changes themselves
+         (ticket 85 round 2, same ruling as crm-hygiene's strip). */
+      .doc-page[data-layout="redline"] .rl-count {
+        display: inline-block; margin-top: 10px;
+        font-size: 14px; color: #1f1f1f; font-weight: 700;
+      }
+
+      /* Section divider on the interview-kit pages — marks where the
+         edited JD ends and part two of the same doc begins. */
+      .doc-page .doc-section-kicker {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #9b2f6f;
+        margin-bottom: 10px;
+      }
+      .doc-page .doc-listen {
+        border-left: 4px solid #2b579a;
+        background: #f3f7fc;
+        padding: 10px 18px;
+        margin: 10px 0 18px;
+        font-size: 20px;
+        color: #323130;
+      }
+      .doc-page .doc-listen strong { color: #2b579a; }
+    
+
+      /* ----- Card zoom (Skylar 2026-09-03: "content of excel sheet
+         too small to read", extended to every facsimile family) -----
+         Card surfaces pin this document to its authoring box and
+         transform-scale the whole iframe into a far smaller window — the
+         library rails at ~0.44, the modal artifact well at 0.6, the card
+         face at 0.61 — so this chrome's em-derived text was landing at
+         4-6px. Authoring the document zoomed puts the surface's shrink on
+         legible type instead. Here the letter page re-fits itself into whatever the outline panel leaves.
+         Gated on the LAYOUT width so the roles band's ~608px artifact
+         mount and the phone embed page stay 1x. */
+      @media (min-width: 1000px) {
+        .doc-app {
+          font-size: calc(14px * 1.6);
+        }
+      }
+</style>
+  </head>
+  <body>
+    <div class="doc-scale-frame">
+    <div class="doc-app" id="doc-viewer">
+      <div class="doc-titlebar">
+        <div class="doc-titlebar-icon">W</div>
+        <span class="doc-titlebar-text">Document.docx - Word</span>
+      </div>
+
+      <div class="doc-main">
+        <div class="doc-outline-panel">
+          <div class="doc-outline-header">
+            <span class="doc-outline-title">Navigation</span>
+            <button class="doc-outline-toggle" aria-label="Toggle navigation panel" title="Toggle navigation">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 6l-6 6 6 6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="doc-pages-area"></div>
+      </div>
+
+      <div class="doc-bottombar">
+        <span class="doc-page-counter">Page 1 of 1</span>
+        <span class="doc-word-count">0 words</span>
+      </div>
+    </div>
+
+    <!--
+      JD CHECK — HR "Easier" scenario. Copy doc: "Check this job description
+      against our leveling guide for leveling and fairness. Give me back an
+      edited version and an interview kit." Output: an edited Word doc with
+      tracked changes, plus a short interview kit — locked call: the kit is
+      the SECOND SECTION of the same doc, not a separate artifact.
+      Story: sr-pm-jd-draft.docx (Senior Program Manager, Gladehart Wellness
+      Foundation — same universe as survey-readout and merit-analysis) is
+      checked against People/leveling-guide.pdf. Seven tracked changes:
+      3 leveling (scope written at L6, team size above the L5 band, years
+      requirement above the L5 floor), 4 fairness (gender-coded wording,
+      degree requirement without an experience alternative, gendered
+      pronouns, missing salary range). Two clauses the guide does not cover
+      are flagged amber for the hiring manager, not decided. The posted
+      range $85,000–$104,000 brackets the P4 Programs midpoint ($94,600)
+      implied by merit-analysis.html (Priya Natarajan, $96,500 at 1.02
+      compa). Balloon `top` values are px against the 816x1056 canvas.
+    -->
+    <template id="doc-pages">
+
+      <div class="doc-page" data-layout="redline" data-title="sr-pm-jd-draft — checked" data-page-number="true">
+        <div class="rl-viewbar">
+          <span>All Markup · 7 tracked changes, 8 comments</span>
+          <span>Reviewed by <strong>Horizon</strong> · Aug 27, 2026</span>
+        </div>
+
+        <div class="rl-cover">
+          <h1>Senior Program Manager</h1>
+          <div class="rl-cover-meta">Gladehart Wellness Foundation · Programs ·
+            draft v1, received Aug 25, 2026 · checked against
+            <code>People/leveling-guide.pdf</code> (v4)</div>
+          <span class="rl-count">7 changes · 3 leveling, 4 fairness · 2 for the hiring manager</span>
+        </div>
+
+        <h2>About the role</h2>
+        <p>Gladehart Wellness Foundation runs community health programs across
+          five regions. The Programs team designs them; this role runs a
+          portfolio of them end to end — budget, partners, and outcomes.</p>
+        <p class="rl-changed">We are looking for
+          <span class="rl-del">a rockstar who will aggressively drive growth
+          and dominate</span> <span class="rl-ins">an experienced program
+          leader who will grow</span> the portfolio — someone who has run
+          community programs at scale and can show the outcomes to prove it.</p>
+
+        <h2>Level and scope</h2>
+        <p class="rl-changed">This is a senior individual-contributor role
+          (P4). You will own
+          <span class="rl-del">the full Programs portfolio and set the
+          team's multi-year strategy</span> <span class="rl-ins">a program
+          area within the portfolio and set its annual plan</span>,
+          reporting to the Director of Programs.</p>
+        <p>The role is based in the Portland office, with regular time at
+          program sites in all five regions.</p>
+
+        <aside class="rl-balloon" style="top:437px">
+          <span class="rl-who">Horizon · About the role</span>
+          "Rockstar" and "aggressively dominate" are gender-coded per guide
+          §6 and predict nothing about the work. Rewritten to describe it.
+        </aside>
+        <aside class="rl-balloon" style="top:615px">
+          <span class="rl-who">Horizon · Level and scope</span>
+          Owning the whole portfolio and multi-year strategy is L6 scope
+          (guide §2.4). As posted, this JD would be graded against Director
+          expectations. Scoped to P4.
+        </aside>
+      </div>
+
+      <div class="doc-page" data-layout="redline" data-page-number="true">
+        <div class="rl-viewbar">
+          <span>All Markup · 7 tracked changes, 8 comments</span>
+          <span>Reviewed by <strong>Horizon</strong> · Aug 27, 2026</span>
+        </div>
+
+        <h2>What you'll do</h2>
+        <ul>
+          <li>Run 3 to 4 active programs across their full cycle — planning,
+            delivery, partner management, and reporting.</li>
+          <li class="rl-changed">Lead a team of
+            <span class="rl-del">12</span> <span class="rl-ins">4</span>
+            program coordinators, with dotted-line support from regional
+            field leads.</li>
+          <li>Own each program's budget and report monthly against outcome
+            targets, not activity counts.</li>
+          <li>Work with Development on funder reporting and renewals for
+            your program area.</li>
+        </ul>
+
+        <h2>Who you are</h2>
+        <ul>
+          <li class="rl-changed">You have <span class="rl-del">10+</span>
+            <span class="rl-ins">7+</span> years of program management
+            experience, with at least 2 running multiple programs at once.</li>
+          <li class="rl-changed">You write clearly and often —
+            <span class="rl-del">he/she</span> <span class="rl-ins">this
+            person</span> will send the reports our board actually reads.</li>
+          <li>You have managed program budgets of $1M or more and reported
+            to funders on outcomes.</li>
+          <li class="rl-changed">Bachelor's degree in public health or a
+            related field<span class="rl-ins">, or equivalent professional
+            experience</span>.</li>
+          <li>Spanish fluency is required.</li>
+        </ul>
+
+        <aside class="rl-balloon" style="top:220px">
+          <span class="rl-who">Horizon · What you'll do</span>
+          A 12-report team is M-track (guide §3.1); the P4 band is 3 to 5
+          coordinators.
+        </aside>
+        <aside class="rl-balloon" style="top:466px">
+          <span class="rl-who">Horizon · Who you are</span>
+          The L5 floor is 7 years (guide §2.3); years past it screen out
+          career-switchers.
+        </aside>
+        <aside class="rl-balloon" style="top:655px">
+          <span class="rl-who">Horizon · Who you are</span>
+          Guide §6.2: a degree requirement must carry an equivalent-
+          experience alternative. Added.
+        </aside>
+        <aside class="rl-balloon is-open" style="top:797px">
+          <span class="rl-who">Needs a human · Who you are</span>
+          The guide takes no position on language requirements. Essential
+          or preferred? The answer resizes the pool — not my call.
+        </aside>
+      </div>
+
+      <div class="doc-page" data-layout="redline" data-page-number="true">
+        <div class="rl-viewbar">
+          <span>All Markup · 7 tracked changes, 8 comments</span>
+          <span>Reviewed by <strong>Horizon</strong> · Aug 27, 2026</span>
+        </div>
+
+        <h2>Compensation and benefits</h2>
+        <p class="rl-changed">Competitive salary and full benefits, including
+          health coverage, retirement match, and four weeks of paid leave.
+          <span class="rl-ins">The salary range for this role is $85,000 to
+          $104,000, set from the P4 band for the Programs job family.</span></p>
+
+        <h2>Working conditions</h2>
+        <p>Expect up to 30% travel to program sites, including some overnight
+          stays during delivery months. Site days can run long; we flex the
+          rest of the week around them.</p>
+
+        <h2>What I changed, and what I left</h2>
+        <p>Seven tracked changes. Three are leveling: the scope paragraph and
+          the team size were written at L6 and M-track against the guide, and
+          the years requirement sat above the L5 floor. Four are fairness:
+          gender-coded wording, a degree requirement with no experience
+          alternative, gendered pronouns, and the missing salary range.
+          Every edit is in the document above, where a reviewer would look.</p>
+        <p>Two lines are flagged and unchanged — the Spanish requirement and
+          the travel expectation. The guide covers neither, so those are
+          decisions for the hiring manager, not corrections.</p>
+        <p>Checked against <code>People/leveling-guide.pdf</code> (v4, updated
+          May 2026). Part two of this document is the interview kit for the
+          four L5 competencies the guide defines for this family.</p>
+
+        <aside class="rl-balloon" style="top:156px">
+          <span class="rl-who">Horizon · Compensation</span>
+          Guide §6.4 requires the range in every posting. $85,000–$104,000
+          is the P4 Programs band from the current comp data.
+        </aside>
+        <aside class="rl-balloon is-open" style="top:334px">
+          <span class="rl-who">Needs a human · Conditions</span>
+          30% travel with overnights is a real screen on caregivers. The
+          guide is silent here — confirm the number reflects the actual
+          delivery calendar before posting.
+        </aside>
+      </div>
+
+      <!-- ── Part two: the interview kit, same doc, plain pages ── -->
+
+      <div class="doc-page" data-page-number="true">
+        <div class="doc-section-kicker">Part two · Interview kit</div>
+        <h1>Interview kit</h1>
+        <p>Four competencies, from the leveling guide's L5 definitions for
+          the Programs family. Two questions and a listening guide for each.
+          Score 1–4 per competency in the debrief — evidence, not
+          impressions.</p>
+
+        <h2>1 · Program strategy and delivery</h2>
+        <ol>
+          <li>Walk me through a program you inherited that was
+            underperforming. What did you change first, and what did you
+            deliberately leave alone?</li>
+          <li>Tell me about a time you cut scope on a program mid-year.
+            How did you decide what went?</li>
+        </ol>
+        <div class="doc-listen"><strong>Listen for:</strong> diagnosis before
+          action; a real tradeoff, named; outcomes for participants rather
+          than activity counts; credit given to the team by name.</div>
+      </div>
+
+      <div class="doc-page" data-page-number="true">
+        <h2>2 · Stakeholder and partner management</h2>
+        <ol>
+          <li>Describe a partner relationship that was going badly. What did
+            you do, and where did it end up?</li>
+          <li>Tell me about a time a funder's ask conflicted with what the
+            program needed.</li>
+        </ol>
+        <div class="doc-listen"><strong>Listen for:</strong> separates the
+          relationship from the work; can disagree without burning the
+          bridge; escalates with a recommendation attached, not just a
+          problem.</div>
+
+        <h2>3 · Team leadership and development</h2>
+        <ol>
+          <li>Tell me about someone you grew from coordinator to manager.
+            What did you actually do?</li>
+          <li>Describe a time you delivered hard feedback to a strong
+            performer.</li>
+        </ol>
+        <div class="doc-listen"><strong>Listen for:</strong> specific and
+          recent examples; development framed as handing over real scope,
+          not sending people to courses; feedback with care and
+          follow-through.</div>
+      </div>
+
+      <div class="doc-page" data-page-number="true">
+        <h2>4 · Judgment and equity practice</h2>
+        <ol>
+          <li>Tell me about a decision where the data and the community's
+            input pointed in different directions.</li>
+          <li>Describe a time you changed a process because it wasn't
+            serving everyone equally.</li>
+        </ol>
+        <div class="doc-listen"><strong>Listen for:</strong> holds both
+          inputs without dismissing either; names who was affected; changed
+          something concrete; comfortable saying what they'd do
+          differently.</div>
+
+        <h2>Logistics</h2>
+        <p>Four 45-minute conversations, one competency each, any order.
+          Scorecards live in <code>Drive › People/Recruiting/sr-pm/</code>;
+          file yours before the debrief, not during it. The panel should
+          disagree in the room, not in the hallway.</p>
+      </div>
+
+    </template>
+
+    <script>
+      const DESIGN_WIDTH = 816;
+
+      class WordViewer {
+        constructor(container, config = {}) {
+          this.container = typeof container === "string" ? document.querySelector(container) : container;
+          this.title = config.title || "Document";
+          const source = document.querySelector(config.pagesTemplate || "#doc-pages");
+          this.pages = source ? Array.from(source.content.querySelectorAll(".doc-page")) : [];
+
+          this.pagesArea = this.container.querySelector(".doc-pages-area");
+          this.outlinePanel = this.container.querySelector(".doc-outline-panel");
+          this.outlineToggle = this.container.querySelector(".doc-outline-toggle");
+          this.titleBar = this.container.querySelector(".doc-titlebar-text");
+          this.pageCounter = this.container.querySelector(".doc-page-counter");
+          this.wordCount = this.container.querySelector(".doc-word-count");
+
+          this.pageFrames = [];
+          this.outlineItems = [];
+          this.headings = []; // { el, itemIndex }
+          this.currentPage = 0;
+          this.activeHeadingIdx = 0;
+          this.scaleFrame = this.container.parentElement; // .doc-scale-frame
+          this.SCALED_BREAKPOINT = 400;
+          this.SCALED_FACTOR = 0.9;
+
+          this.init();
+        }
+
+        init() {
+          if (this.titleBar) this.titleBar.textContent = `${this.title}.docx - Word`;
+          document.title = this.title;
+          this.renderPages();
+          this.renderOutline();
+          this.bindOutlineToggle();
+          this.updateWordCount();
+          this.updatePageCounter();
+          this.updateScale();
+          this.rescaleAll();
+          // Observe the pages area so rescaling tracks the sidebar
+          // collapse/expand animation, not just outer-container resizes.
+          const ro = new ResizeObserver(() => {
+            this.updateScale();
+            this.rescaleAll();
+          });
+          ro.observe(this.pagesArea);
+          ro.observe(this.container);
+          if (this.scaleFrame) ro.observe(this.scaleFrame);
+          this.pagesArea.addEventListener("scroll", () => this.onScroll());
+        }
+
+        /** Below the breakpoint, hold a fixed 0.9 scale and set the
+            doc-app's pre-scale width/height to containerSize / 0.9 so the
+            visual fills the container exactly. The internal layout stays
+            responsive at all sizes. */
+        updateScale() {
+          if (!this.scaleFrame) return;
+          const w = this.scaleFrame.clientWidth;
+          const h = this.scaleFrame.clientHeight;
+          if (w <= this.SCALED_BREAKPOINT) {
+            this.container.style.width = (w / this.SCALED_FACTOR) + "px";
+            this.container.style.height = (h / this.SCALED_FACTOR) + "px";
+          } else {
+            this.container.style.width = "";
+            this.container.style.height = "";
+          }
+        }
+
+        bindOutlineToggle() {
+          if (!this.outlineToggle) return;
+          this.outlineToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.outlinePanel.classList.toggle("collapsed");
+          });
+        }
+
+        renderPages() {
+          this.pagesArea.innerHTML = "";
+          this.pageFrames = [];
+          this.pages.forEach((page, i) => {
+            const frame = document.createElement("div");
+            frame.className = "doc-page-frame";
+            frame.dataset.index = String(i);
+            const clone = page.cloneNode(true);
+
+            // Auto page number injection
+            if (clone.dataset.pageNumber === "true") {
+              const num = document.createElement("div");
+              num.className = "doc-page-number";
+              num.textContent = String(i + 1);
+              clone.appendChild(num);
+            }
+            frame.appendChild(clone);
+            this.pagesArea.appendChild(frame);
+            this.pageFrames.push(frame);
+            this.scalePage(frame);
+          });
+        }
+
+        scalePage(frame) {
+          const page = frame.querySelector(".doc-page");
+          if (!page) return;
+          const width = frame.getBoundingClientRect().width;
+          if (width > 0) {
+            page.style.transform = `scale(${width / DESIGN_WIDTH})`;
+          }
+        }
+
+        rescaleAll() {
+          this.pageFrames.forEach((f) => this.scalePage(f));
+        }
+
+        /** Auto-build the Navigation pane from h1/h2/h3 across all pages.
+            Each outline item maps to exactly one heading — clicks and
+            active-tracking operate at heading granularity, not page. */
+        renderOutline() {
+          if (!this.outlinePanel) return;
+          this.outlinePanel.querySelectorAll(".doc-outline-item").forEach((el) => el.remove());
+          this.outlineItems = [];
+          this.headings = [];
+
+          let headingCount = 0;
+          this.pageFrames.forEach((frame, pageIdx) => {
+            const page = frame.querySelector(".doc-page");
+            if (!page) return;
+            const headings = page.querySelectorAll("h1, h2, h3");
+            headings.forEach((h) => {
+              const level = parseInt(h.tagName.substring(1), 10);
+              const id = `doc-h-${headingCount++}`;
+              h.id = id;
+              const headingIdx = this.headings.length;
+              this.headings.push({ el: h, pageIdx });
+
+              const item = document.createElement("div");
+              item.className = "doc-outline-item";
+              item.dataset.level = String(level);
+              item.dataset.headingIdx = String(headingIdx);
+              item.textContent = h.textContent;
+              item.title = h.textContent;
+              item.addEventListener("click", () => this.scrollToHeading(headingIdx));
+              this.outlinePanel.appendChild(item);
+              this.outlineItems.push(item);
+            });
+          });
+
+          if (this.outlineItems.length === 0) {
+            this.outlinePanel.style.display = "none";
+          } else {
+            this.setActiveHeading(0);
+          }
+        }
+
+        scrollToHeading(index) {
+          const h = this.headings[index];
+          if (!h) return;
+          // Use scrollIntoView on the heading — its bounding rect accounts
+          // for the page's CSS transform scale, so it lands correctly.
+          h.el.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Optimistically mark active; onScroll will reconcile when the
+          // smooth scroll settles.
+          this.setActiveHeading(index);
+        }
+
+        onScroll() {
+          // --- Track current page for the bottom-bar counter ---
+          const areaRect = this.pagesArea.getBoundingClientRect();
+          const areaCenter = areaRect.top + areaRect.height / 2;
+          let closestPage = 0;
+          let closestPageDist = Infinity;
+          this.pageFrames.forEach((frame, i) => {
+            const r = frame.getBoundingClientRect();
+            const frameCenter = r.top + r.height / 2;
+            const dist = Math.abs(frameCenter - areaCenter);
+            if (dist < closestPageDist) { closestPageDist = dist; closestPage = i; }
+          });
+          if (closestPage !== this.currentPage) {
+            this.currentPage = closestPage;
+            this.updatePageCounter();
+          }
+
+          // --- Track active heading individually ---
+          // The active heading is the last one whose top has crossed a
+          // threshold just below the top of the pages area. This means
+          // selecting an h3 highlights only that h3 — never its siblings.
+          if (this.headings.length === 0) return;
+          const threshold = areaRect.top + 80;
+          let activeIdx = 0;
+          for (let i = 0; i < this.headings.length; i++) {
+            const top = this.headings[i].el.getBoundingClientRect().top;
+            if (top <= threshold) {
+              activeIdx = i;
+            } else {
+              break;
+            }
+          }
+          if (activeIdx !== this.activeHeadingIdx) {
+            this.setActiveHeading(activeIdx);
+          }
+        }
+
+        setActiveHeading(index) {
+          this.activeHeadingIdx = index;
+          this.outlineItems.forEach((item, i) => {
+            item.classList.toggle("active", i === index);
+          });
+          const active = this.outlineItems[index];
+          if (active) {
+            // Keep the active item visible in the nav panel without
+            // hijacking the main document scroll.
+            const panelRect = this.outlinePanel.getBoundingClientRect();
+            const itemRect = active.getBoundingClientRect();
+            if (itemRect.top < panelRect.top || itemRect.bottom > panelRect.bottom) {
+              active.scrollIntoView({ block: "nearest" });
+            }
+          }
+        }
+
+        updatePageCounter() {
+          if (this.pageCounter) {
+            this.pageCounter.textContent = `Page ${this.currentPage + 1} of ${this.pageFrames.length}`;
+          }
+        }
+
+        updateWordCount() {
+          if (!this.wordCount) return;
+          let count = 0;
+          this.pageFrames.forEach((frame) => {
+            const text = frame.innerText || "";
+            const words = text.trim().match(/\S+/g);
+            if (words) count += words.length;
+          });
+          this.wordCount.textContent = `${count.toLocaleString()} words`;
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const firstTitle = document
+          .querySelector("#doc-pages")
+          ?.content?.querySelector(".doc-page")
+          ?.dataset?.title;
+        new WordViewer("#doc-viewer", {
+          title: firstTitle || "Document",
+          pagesTemplate: "#doc-pages",
+        });
+      });
+    </script>
+    </div>
+  </body>
+</html>

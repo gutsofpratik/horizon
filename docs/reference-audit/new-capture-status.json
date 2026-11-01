@@ -1,0 +1,562 @@
+[
+  {
+    "name": "product-interactions-dark",
+    "evidenceId": "ev_7ae7bd26a22a6d0b95a69f32303875647517017a0d1a5f3a6020e4bbdf1a75ab",
+    "steps": 113,
+    "failed": [
+      {
+        "id": "role-0",
+        "status": "failed",
+        "error": "Analysis operation timed out after 10000ms: capture_browser_scenario"
+      },
+      {
+        "id": "role-0-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-calendar",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-calendar-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-slack",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-slack-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-claude",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-claude-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-gmail",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-gmail-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-word",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-word-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-drive",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-drive-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-excel",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-0-app-excel-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-amplitude",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-amplitude-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-bigquery",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-bigquery-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-powerpoint",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-powerpoint-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-claude",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-claude-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-drive",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-drive-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-gmail",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-gmail-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-slack",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-slack-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-word",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-1-app-word-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-salesforce",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-salesforce-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-slack",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-slack-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-word",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-word-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-calendar",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-calendar-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-claude",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-claude-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-excel",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-excel-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-powerpoint",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-powerpoint-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-gong",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-2-app-gong-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-3",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-3-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-3-app-drive",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-3-app-drive-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-3-app-excel",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-3-app-excel-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-3-app-powerpoint",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-3-app-powerpoint-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-3-app-claude",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-3-app-claude-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4-app-drive",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4-app-drive-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4-app-word",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4-app-word-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4-app-claude",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4-app-claude-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4-app-powerpoint",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4-app-powerpoint-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4-app-excel",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-4-app-excel-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-courtlistener",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-courtlistener-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-word",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-word-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-claude",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-claude-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-everlaw",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-everlaw-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-excel",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-excel-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-drive",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-5-app-drive-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-calendar",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-calendar-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-slack",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-slack-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-claude",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-claude-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-gmail",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-gmail-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-word",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-word-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-bigquery",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-bigquery-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-sheets",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "role-6-app-sheets-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "end",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      },
+      {
+        "id": "end-settle",
+        "status": "cancelled",
+        "error": "not executed after an earlier action failure"
+      }
+    ],
+    "completeness": {
+      "status": "incomplete",
+      "equality_eligible": false,
+      "missing_sections": [
+        "action",
+        "dom",
+        "screenshot",
+        "url"
+      ],
+      "truncated_sections": []
+    }
+  },
+  {
+    "name": "lab-scroll-dark",
+    "evidenceId": "ev_2f081b5c80e0e6c9642c9901e328caa4cb01592fee28b122fd6311bd2a8ec797",
+    "steps": 78,
+    "failed": [],
+    "completeness": {
+      "status": "complete",
+      "equality_eligible": true,
+      "missing_sections": [],
+      "truncated_sections": []
+    }
+  }
+]

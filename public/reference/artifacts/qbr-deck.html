@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Northfield Q2 business review</title>
+    <style>
+      :root { color-scheme: light; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        height: 100%;
+      }
+      body {
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        line-height: 1.5;
+        /* Default: clip overflow. The frame below switches to scroll
+           when the scaled-mode container query kicks in. */
+        overflow: hidden;
+      }
+
+      /* ----- Scale frame -----
+         Acts as the scroll container when the artifact renders at a fixed
+         natural size and is scaled down. A container query lets the scaled
+         mode kick in based on the parent's width, not the viewport. */
+      .ppt-scale-frame {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        container-type: inline-size;
+      }
+
+      /* ----- PowerPoint chrome (preserved from original) ----- */
+      .ppt-app {
+        background: #f3f2f1;
+        overflow: hidden;
+        border-radius: 8px;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        /* Pinned to desktop size — chrome stays constant until the
+           scaled-mode container query takes over. */
+        font-size: 14px;
+        transform-origin: top left;
+      }
+
+      /* ----- Scaled mode: <= 400px container width -----
+         Pin a natural design footprint, scale it 80%, and let the frame
+         scroll for anything that doesn't fit. */
+      @container (max-width: 400px) {
+        .ppt-scale-frame {
+          overflow: hidden;
+        }
+        .ppt-app {
+          /* width + height set by JS so visual fills the container at
+             a fixed 0.9 scale; chrome layout adapts to the available
+             width the same way it does above the breakpoint. */
+          transform: scale(0.9);
+        }
+      }
+      .ppt-titlebar {
+        display: flex;
+        align-items: center;
+        padding: 0.7em 1em;
+        background: #c43e1c;
+        gap: 0.8em;
+      }
+      .ppt-titlebar-icon {
+        width: 1.4em;
+        height: 1.4em;
+        background: white;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8em;
+        color: #c43e1c;
+      }
+      .ppt-titlebar-text {
+        flex: 1;
+        color: white;
+        font-size: 0.9em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .ppt-main {
+        display: flex;
+        background: #e1dfdd;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .ppt-slides-panel {
+        /* Caps at 11em, but never wider than 20% of the app width. */
+        width: min(11em, 20%);
+        flex-shrink: 0;
+        background: #f3f2f1;
+        border-right: 1px solid #d2d0ce;
+        padding: 0.8em;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em;
+        overflow-y: scroll;
+        scrollbar-width: thin;
+        scrollbar-color: #a19f9d transparent;
+      }
+      .ppt-slides-panel::-webkit-scrollbar { width: 4px; }
+      .ppt-slides-panel::-webkit-scrollbar-track { background: transparent; }
+      .ppt-slides-panel::-webkit-scrollbar-thumb { background: #a19f9d; border-radius: 2px; }
+      .ppt-slides-panel::-webkit-scrollbar-thumb:hover { background: #8a8886; }
+
+      .ppt-thumbnail {
+        background: white;
+        border: 0.15em solid transparent;
+        border-radius: 0.2em;
+        padding: 0.2em;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+      }
+      .ppt-thumbnail.active { border-color: #c43e1c; }
+      .ppt-thumbnail:hover:not(.active) { border-color: #a4a4a4; }
+
+      .ppt-viewport-area {
+        flex: 1;
+        padding: 1.5em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        overflow: hidden;
+      }
+      .ppt-slide-frame {
+        background: white;
+        box-shadow: 0 0.15em 0.5em rgba(0, 0, 0, 0.15);
+        width: 100%;
+        max-width: 100%;
+      }
+
+      /* ----- Slide canvas -----
+         Every slide is rendered at a fixed 1280x720 design size.
+         The wrapper (frame or thumbnail-inner) creates a 16:9 box and
+         scales the slide via CSS transform to fit. Authors size content
+         in px using this 1280x720 canvas — same units PowerPoint uses. */
+      .ppt-thumbnail-inner,
+      .ppt-slide-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+      }
+      .ppt-thumbnail-inner { border-radius: 0.15em; }
+
+      .ppt-slide {
+        /* Fixed design canvas. Authors compose against this size. */
+        width: 1280px;
+        height: 720px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: top left;
+        background: #ffffff;
+        color: #1f1f1f;
+        overflow: hidden;
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      }
+
+      /* ----- Built-in slide layouts -----
+         Pick one via data-layout="...". All sizes are px against the
+         1280x720 canvas. Custom slides omit data-layout and add their
+         own scoped CSS inside a <style> block in the <template>. */
+      .ppt-slide[data-layout="title"] {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 110px 140px;
+        background: linear-gradient(135deg, #c43e1c 0%, #8a2a12 100%);
+        color: white;
+      }
+      .ppt-slide[data-layout="title"] h1 { font-size: 84px; font-weight: 600; line-height: 1.1; }
+      .ppt-slide[data-layout="title"] p { font-size: 32px; margin-top: 24px; opacity: 0.9; }
+
+      .ppt-slide[data-layout="bullets"] {
+        padding: 80px 100px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+      .ppt-slide[data-layout="bullets"] h2 { font-size: 56px; color: #c43e1c; font-weight: 600; }
+      .ppt-slide[data-layout="bullets"] ul { padding-left: 48px; display: flex; flex-direction: column; gap: 20px; }
+      .ppt-slide[data-layout="bullets"] li { font-size: 32px; line-height: 1.4; }
+
+      .ppt-slide[data-layout="two-column"] {
+        padding: 80px 100px;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 32px;
+      }
+      .ppt-slide[data-layout="two-column"] h2 { font-size: 56px; color: #c43e1c; font-weight: 600; }
+      .ppt-slide[data-layout="two-column"] .cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+      }
+      .ppt-slide[data-layout="two-column"] .col h3 { font-size: 34px; font-weight: 600; margin-bottom: 16px; }
+      .ppt-slide[data-layout="two-column"] .col p { font-size: 26px; line-height: 1.5; }
+
+      .ppt-slide[data-layout="stat"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 80px;
+        text-align: center;
+        gap: 24px;
+      }
+      .ppt-slide[data-layout="stat"] .big-number { font-size: 240px; font-weight: 700; color: #c43e1c; line-height: 1; }
+      .ppt-slide[data-layout="stat"] .caption { font-size: 38px; color: #605e5c; max-width: 900px; }
+
+      .ppt-slide[data-layout="closing"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 100px;
+        text-align: center;
+        gap: 32px;
+        background: #1f1f1f;
+        color: white;
+      }
+      .ppt-slide[data-layout="closing"] h2 { font-size: 80px; font-weight: 600; }
+      .ppt-slide[data-layout="closing"] p { font-size: 32px; opacity: 0.85; }
+
+      /* ═══════════════════════════════════════════════════════════════
+         BLUE GRID (#6A9BCC) · refined — deck system, prefix o-
+         Sampled from refs 063/065/083/021. Cool paper #f5f4f1 ruled into
+         90px cells (#e3e4e6) with faint intersection dots, Charter
+         regular headlines, outlined pills, the #6a9bcc line with a glow
+         dot, an 083 heat grid, and a 021 cream-pill closer on #6a9bcc.
+         All sizes px against the 1280x720 canvas.
+         ═══════════════════════════════════════════════════════════════ */
+      .ppt-slide[data-slide^="o-"] {
+        --o-paper: #f5f4f1;
+        --o-line: #e3e4e6;
+        --o-ink: #1f1e1c;
+        --o-orange: #6a9bcc;   /* Skylar 9/11: the accent is this blue, not Signal Orange */
+        --o-heat: #6a9bcc;
+        --o-soft: #7d7c78;
+        --o-serif: "Charter", "Tiempos Text", Georgia, serif;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: var(--o-ink);
+        background:
+          repeating-linear-gradient(0deg, var(--o-line) 0 1px, transparent 1px 90px),
+          repeating-linear-gradient(90deg, var(--o-line) 0 1px, transparent 1px 90px),
+          var(--o-paper);
+        background-position: 0 45px, 45px 0, 0 0;
+      }
+      .o-dots { position: absolute; inset: 0; pointer-events: none;
+        background-image: radial-gradient(circle 1.6px, #cfcfcd 99%, transparent);
+        background-size: 90px 90px; background-position: 44px 44px; }
+
+      .o-brand { position: absolute; top: 44px; left: 56px; display: flex; align-items: center; gap: 10px;
+        font-size: 14px; font-weight: 600; letter-spacing: 0.01em; }
+      .o-mark { width: 20px; height: 20px; background: var(--o-orange); border-radius: 4px; }
+      .o-stamp { position: absolute; top: 46px; right: 56px; font-size: 13.5px; color: var(--o-soft); }
+
+      .o-h { position: absolute; font-family: var(--o-serif); font-weight: 400; letter-spacing: -0.012em; line-height: 1.12; }
+      .o-sub { position: absolute; font-size: 17px; line-height: 1.5; color: #4f4e4a; max-width: 640px; }
+      .o-chips { position: absolute; display: flex; gap: 12px; align-items: center; }
+      .o-chip { display: inline-flex; align-items: center; gap: 8px; background: #fff;
+        border: 1px solid #d6d6d3; border-radius: 999px; padding: 8px 16px;
+        font-size: 16px; font-weight: 500; }
+      .o-chip .d { color: var(--o-orange); font-weight: 600; }
+      .o-chip.is-flag { border-color: var(--o-orange); color: var(--o-orange); }
+      .o-chip small { font-weight: 400; color: var(--o-soft); font-size: 12.5px; }
+      .o-date { font-size: 14px; color: var(--o-soft); }
+
+      .o-chart { position: absolute; }
+      .o-chart svg { display: block; overflow: visible; }
+      .o-cap { position: absolute; font-size: 14.5px; line-height: 1.5; color: #4f4e4a; max-width: 560px; }
+      .o-cap strong { color: var(--o-orange); font-weight: 600; }
+
+      /* 083 heat grid — rows are teams, columns the 13 weeks of the quarter */
+      .o-heat { position: absolute; display: grid; grid-template-columns: 150px repeat(13, 44px) 150px;
+        grid-auto-rows: 44px; gap: 4px; align-items: center; }
+      .o-heat .lab { font-size: 15px; font-weight: 500; }
+      .o-heat .val { font-size: 13.5px; color: var(--o-soft); text-align: right; padding-right: 4px; }
+      .o-heat .c { width: 44px; height: 44px; background: var(--o-heat); }
+      .o-heat .wk { font-size: 11px; color: #a3a2a0; text-align: center; letter-spacing: 0.04em; }
+
+      .o-cols { position: absolute; display: grid; grid-template-columns: repeat(3, 1fr); gap: 44px; }
+      .o-kick { display: inline-flex; align-items: center; background: #fff; border: 1px solid #d6d6d3;
+        border-radius: 999px; padding: 6px 13px; font-size: 12px; font-weight: 600;
+        letter-spacing: 0.04em; text-transform: uppercase; color: #4f4e4a; }
+      .o-item.is-flag .o-kick { border-color: var(--o-orange); color: var(--o-orange); }
+      .o-item h3 { font-family: var(--o-serif); font-size: 28px; line-height: 1.2; font-weight: 400;
+        letter-spacing: -0.01em; margin-top: 16px; }
+      .o-item p { font-size: 15px; line-height: 1.55; color: #4f4e4a; margin-top: 12px; }
+
+      /* 021 closer — saturated orange, one cream pill */
+      .ppt-slide[data-slide^="o-"].o-invert {
+        color: #fffcf5;
+        background:
+          repeating-linear-gradient(0deg, rgba(255,255,255,0.13) 0 1px, transparent 1px 90px),
+          repeating-linear-gradient(90deg, rgba(255,255,255,0.13) 0 1px, transparent 1px 90px),
+          #6a9bcc;
+        background-position: 0 45px, 45px 0, 0 0;
+      }
+      .o-invert .o-dots { background-image: radial-gradient(circle 1.6px, rgba(255,255,255,0.45) 99%, transparent); }
+      .o-invert .o-mark { background: #fffcf5; }
+      .o-invert .o-stamp { color: rgba(255,252,245,0.8); }
+      .o-pill { position: absolute; left: 56px; right: 56px; top: 132px; height: 250px; border-radius: 999px;
+        background: #fffcf5; color: #14283a; display: flex; align-items: center; justify-content: center;
+        font-size: 92px; font-weight: 700; letter-spacing: -0.035em; line-height: 1;
+        box-shadow: 0 2px 0 rgba(20,50,80,0.18); }
+      .o-pill small { font-size: 22px; font-weight: 500; letter-spacing: 0; margin-left: 26px; opacity: 0.7; align-self: flex-end; padding-bottom: 14px; }
+      .o-close-cols { position: absolute; left: 56px; right: 56px; top: 428px; display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 40px; }
+      .o-close-cols .k { font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; margin-bottom: 10px; font-weight: 600; }
+      .o-close-cols h3 { font-family: var(--o-serif); font-weight: 400; font-size: 26px; line-height: 1.2; margin: 0 0 8px; }
+      .o-close-cols p { font-size: 14px; line-height: 1.55; margin: 0; opacity: 0.95; }
+      .o-close-cols p strong { font-weight: 600; }
+      .o-saved { position: absolute; left: 56px; bottom: 40px; font-size: 13px; opacity: 0.85; }
+
+      .ppt-bottombar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.4em;
+        background: #f3f2f1;
+        border-top: 1px solid #d2d0ce;
+        font-size: 0.8em;
+        color: #605e5c;
+      }
+      .ppt-nav-btn {
+        width: 1.8em;
+        height: 1.8em;
+        border: 1px solid #d2d0ce;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #323130;
+        transition: all 0.1s ease;
+      }
+      .ppt-nav-btn:hover:not(:disabled) { background: #f3f2f1; border-color: #8a8886; }
+      .ppt-nav-btn:disabled { opacity: 0.4; cursor: default; }
+      .ppt-nav-btn svg { width: 1em; height: 1em; }
+      .ppt-slide-counter { font-size: 0.85em; color: #323130; flex: 1; text-align: center; }
+
+      @media (max-width: 480px) {
+        .ppt-viewport-area { padding: 1em; }
+      }
+    
+
+      /* ----- Card zoom (Skylar 2026-09-03: "content of excel sheet
+         too small to read", extended to every facsimile family) -----
+         Card surfaces pin this document to its authoring box and
+         transform-scale the whole iframe into a far smaller window — the
+         library rails at ~0.44, the modal artifact well at 0.6, the card
+         face at 0.61 — so this chrome's em-derived text was landing at
+         4-6px. Authoring the document zoomed puts the surface's shrink on
+         legible type instead. Here the slide is a fixed composition, so its stage is pinned below rather than left to shrink.
+         Gated on the LAYOUT width so the roles band's ~608px artifact
+         mount and the phone embed page stay 1x. */
+      @media (min-width: 1000px) {
+        .ppt-app {
+          font-size: calc(14px * 1.6);
+        }
+        /* The slide must not pay for the chrome. Every one of these is em-based
+           and would grow with the base size above — the rail and the stage
+           padding stealing width, the two bars stealing height — and the slide
+           is height-capped by its 16:9 frame, so it would come out SMALLER than
+           before the zoom. Pinned to px (and trimmed a little) so the chrome
+           text grows and the slide gains room instead of losing it. */
+        .ppt-slides-panel {
+          width: 154px;
+          padding: 8px;
+        }
+        .ppt-viewport-area {
+          padding: 10px;
+        }
+        .ppt-titlebar {
+          padding: 7px 14px;
+        }
+        .ppt-bottombar {
+          padding: 5px;
+        }
+      }
+</style>
+</head>
+<body>
+<div class="ppt-scale-frame">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+      <filter id="o-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="9"/></filter>
+    </defs></svg>
+    
+    <div class="ppt-app" id="ppt-viewer">
+      <div class="ppt-titlebar">
+        <div class="ppt-titlebar-icon">P</div>
+        <span class="ppt-titlebar-text">Presentation.pptx - PowerPoint</span>
+      </div>
+
+      <div class="ppt-main">
+        <div class="ppt-slides-panel"></div>
+        <div class="ppt-viewport-area">
+          <div class="ppt-slide-frame"></div>
+        </div>
+      </div>
+
+      <div class="ppt-bottombar">
+        <button class="ppt-nav-btn prev" aria-label="Previous slide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" /></svg>
+        </button>
+        <span class="ppt-slide-counter">1 of 1</span>
+        <button class="ppt-nav-btn next" aria-label="Next slide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <template id="ppt-slides">
+      <!-- QBR FROM A VAGUE ASK — content from the landed final plus a
+           recommendations slide (5 of 6, copy doc Output, 9/14); the system
+           is rebuilt from the reference pixels. -->
+
+      <!-- 1 · Title (063: headline, pill, date, the line below) -->
+      <div class="ppt-slide" data-slide="o-qbr-title" data-title="Northfield Q2 business review">
+        <div class="o-dots"></div>
+        <div class="o-brand"><span class="o-mark"></span>Northfield Supply Co.</div>
+        <div class="o-stamp">Q2 FY26 · prepared Aug 19</div>
+        <div class="o-h" style="left:56px; top:126px; font-size:58px; max-width:900px">The quarter Northfield bought more than it used</div>
+        <div class="o-chips" style="left:56px; top:318px">
+          <span class="o-chip is-flag">Activation <span class="d">↓ −6 pts</span></span>
+          <span class="o-chip">Seats <span class="d">↑ +20%</span></span>
+          <span class="o-date">Salesforce + Drive · vs Q1 FY26</span>
+        </div>
+        <div class="o-chart" style="left:0; right:0; bottom:0; top:400px">
+          <svg viewBox="0 0 1280 320" preserveAspectRatio="none" style="width:1280px; height:320px">
+            <path d="M-10,70 C120,62 190,68 300,106 C400,140 470,128 560,142 C660,158 760,152 860,196 C920,222 980,214 1050,242 C1130,274 1220,292 1300,310"
+              fill="none" stroke="#6a9bcc" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="860" cy="196" r="22" fill="#6a9bcc" opacity="0.28" filter="url(#o-glow)"/>
+            <circle cx="860" cy="196" r="8" fill="#6a9bcc"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 2 · Where the quarter landed -->
+      <div class="ppt-slide" data-slide="o-qbr-numbers">
+        <div class="o-dots"></div>
+        <div class="o-brand"><span class="o-mark"></span>Northfield Supply Co.</div>
+        <div class="o-stamp">Q2 FY26 vs Q1 FY26</div>
+        <div class="o-h" style="left:56px; top:118px; font-size:46px">Where the quarter landed</div>
+        <div class="o-chips" style="left:56px; top:204px">
+          <span class="o-chip">Seats 480 <span class="d">↑ +20%</span> <small>Salesforce</small></span>
+          <span class="o-chip">Weekly active 292 <span class="d">↑ +9%</span> <small>usage export</small></span>
+          <span class="o-chip is-flag">Activation 61% <span class="d">↓ −6 pts</span> <small>derived</small></span>
+          <span class="o-chip">Tickets 47 <span class="d">↓ −24%</span> <small>Salesforce</small></span>
+        </div>
+        <div class="o-chart" style="left:0; right:0; top:296px">
+          <svg viewBox="0 0 1280 260" preserveAspectRatio="none" style="width:1280px; height:260px">
+            <path d="M-10,64 C150,58 260,60 400,66 C540,72 640,64 760,78 C850,90 940,120 1030,168 C1100,204 1200,236 1300,252"
+              fill="none" stroke="#6a9bcc" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="1030" cy="168" r="22" fill="#6a9bcc" opacity="0.28" filter="url(#o-glow)"/>
+            <circle cx="1030" cy="168" r="8" fill="#6a9bcc"/>
+          </svg>
+        </div>
+        <div class="o-cap" style="left:56px; bottom:52px"><strong>Worth watching:</strong>
+          every headline number improved except the one that predicts renewal.
+          Seat growth without usage growth is what a flat renewal looks like two quarters early.</div>
+        <div class="o-cap" style="right:56px; bottom:52px; text-align:right; max-width:300px; color:#7d7c78">
+          Activation, weekly · Q3 FY25 → Q2 FY26</div>
+      </div>
+
+      <!-- 3 · Adoption by team — the 083 heat grid -->
+      <div class="ppt-slide" data-slide="o-qbr-teams">
+        <div class="o-dots"></div>
+        <div class="o-brand"><span class="o-mark"></span>Northfield Supply Co.</div>
+        <div class="o-stamp">Weekly active as a share of seats · 13 weeks of Q2</div>
+        <div class="o-h" style="left:56px; top:118px; font-size:46px">One team is the whole gap</div>
+        <div class="o-sub" style="left:56px; top:186px">Field service took 60 new seats in June and added six users.</div>
+        <div class="o-heat" style="left:56px; top:262px">
+          <span class="lab">Operations</span><span class="c" style="background:#93b5d7"></span><span class="c" style="background:#91b4d6"></span><span class="c" style="background:#90b3d6"></span><span class="c" style="background:#8eb2d6"></span><span class="c" style="background:#8eb2d6"></span><span class="c" style="background:#8db1d5"></span><span class="c" style="background:#8bb0d5"></span><span class="c" style="background:#8bb0d5"></span><span class="c" style="background:#89afd4"></span><span class="c" style="background:#89afd4"></span><span class="c" style="background:#88aed4"></span><span class="c" style="background:#89afd4"></span><span class="c" style="background:#89afd4"></span><span class="val">112 of 140 · 80%</span>
+          <span class="lab">Finance</span><span class="c" style="background:#96b7d8"></span><span class="c" style="background:#94b6d7"></span><span class="c" style="background:#93b5d7"></span><span class="c" style="background:#91b4d6"></span><span class="c" style="background:#90b3d6"></span><span class="c" style="background:#90b3d6"></span><span class="c" style="background:#8eb2d6"></span><span class="c" style="background:#8eb2d6"></span><span class="c" style="background:#8db1d5"></span><span class="c" style="background:#8db1d5"></span><span class="c" style="background:#8db1d5"></span><span class="c" style="background:#8bb0d5"></span><span class="c" style="background:#8db1d5"></span><span class="val">70 of 90 · 78%</span>
+          <span class="lab">Procurement</span><span class="c" style="background:#afc7de"></span><span class="c" style="background:#aec6de"></span><span class="c" style="background:#acc5de"></span><span class="c" style="background:#abc4dd"></span><span class="c" style="background:#abc4dd"></span><span class="c" style="background:#a9c3dd"></span><span class="c" style="background:#a8c3dc"></span><span class="c" style="background:#a6c2dc"></span><span class="c" style="background:#a6c2dc"></span><span class="c" style="background:#a8c3dc"></span><span class="c" style="background:#a8c3dc"></span><span class="c" style="background:#a6c2dc"></span><span class="c" style="background:#a8c3dc"></span><span class="val">48 of 80 · 60%</span>
+          <span class="lab" style="color:#6a9bcc;font-weight:600">Field service</span><span class="c" style="background:#b3cae0"></span><span class="c" style="background:#b5cbe0"></span><span class="c" style="background:#b6cce0"></span><span class="c" style="background:#b8cde1"></span><span class="c" style="background:#b9cee1"></span><span class="c" style="background:#c5d5e4"></span><span class="c" style="background:#cddae6"></span><span class="c" style="background:#cedbe7"></span><span class="c" style="background:#cbd9e6"></span><span class="c" style="background:#cad9e6"></span><span class="c" style="background:#cad9e6"></span><span class="c" style="background:#cbd9e6"></span><span class="c" style="background:#cad9e6"></span><span class="val" style="color:#6a9bcc;font-weight:600">40 of 110 · 36%</span>
+          <span class="lab" style="color:#6a9bcc;font-weight:600">Legal</span><span class="c" style="background:#cddae6"></span><span class="c" style="background:#cbd9e6"></span><span class="c" style="background:#cad9e6"></span><span class="c" style="background:#cad9e6"></span><span class="c" style="background:#c9d8e5"></span><span class="c" style="background:#c7d7e5"></span><span class="c" style="background:#c9d8e5"></span><span class="c" style="background:#c9d8e5"></span><span class="c" style="background:#cad9e6"></span><span class="c" style="background:#c9d8e5"></span><span class="c" style="background:#c7d7e5"></span><span class="c" style="background:#c9d8e5"></span><span class="c" style="background:#c9d8e5"></span><span class="val" style="color:#6a9bcc;font-weight:600">22 of 60 · 37%</span>
+          <span></span><span class="wk">W1</span><span class="wk"></span><span class="wk"></span><span class="wk"></span><span class="wk">W5</span><span class="wk"></span><span class="wk"></span><span class="wk"></span><span class="wk">W9</span><span class="wk"></span><span class="wk"></span><span class="wk"></span><span class="wk">W13</span><span></span>
+        </div>
+        <div class="o-cap" style="left:56px; bottom:52px; max-width:900px">Field service and legal together hold
+          <strong>170 seats and 62 weekly users</strong>. Bring field service to the 60% procurement
+          runs at and activation returns to 66% with no new seats sold.</div>
+      </div>
+
+      <!-- 4 · Open items -->
+      <div class="ppt-slide" data-slide="o-qbr-open">
+        <div class="o-dots"></div>
+        <div class="o-brand"><span class="o-mark"></span>Northfield Supply Co.</div>
+        <div class="o-stamp">Open going into Q3</div>
+        <div class="o-h" style="left:56px; top:118px; font-size:46px">Three things open</div>
+        <div class="o-cols" style="left:56px; right:56px; top:236px">
+          <div class="o-item is-flag">
+            <span class="o-kick">Adoption · Theo Lindqvist, IT</span>
+            <h3>70 field-service seats have never been used</h3>
+            <p>Both onboarding sessions booked for July were cancelled and not
+              rebooked. This is the single largest lever on the renewal number
+              and it needs a date, not a plan.</p>
+          </div>
+          <div class="o-item">
+            <span class="o-kick">Relationship · unassigned</span>
+            <h3>The exec sponsor changed on July 9</h3>
+            <p>Renee Alvarado moved internally. Salesforce still lists her as
+              the economic buyer, and no replacement has been briefed — six
+              weeks with nobody named on their side.</p>
+          </div>
+          <div class="o-item">
+            <span class="o-kick">Commercial · answered by Sept 15</span>
+            <h3>Procurement asked about a three-year term</h3>
+            <p>Asked August 5, unanswered. The contract auto-renews November 30,
+              so a multi-year conversation has to start before the notice window
+              closes on October 31.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5 · Recommendations — copy doc Output: "a recommendations slide" (added 9/14) -->
+      <div class="ppt-slide" data-slide="o-qbr-recs">
+        <div class="o-dots"></div>
+        <div class="o-brand"><span class="o-mark"></span>Northfield Supply Co.</div>
+        <div class="o-stamp">Recommendations · before the Oct 31 notice window</div>
+        <div class="o-h" style="left:56px; top:118px; font-size:46px">Three moves, in this order</div>
+        <div class="o-cols" style="left:56px; right:56px; top:236px">
+          <div class="o-item is-flag">
+            <span class="o-kick">1 · Adoption · this week</span>
+            <h3>Rebook both field-service onboarding sessions</h3>
+            <p>Theo Lindqvist owns the dates. Start with the 70 seats that have
+              never logged in: at procurement's 60% rate that is about 26 weekly
+              users and activation back to 66%, with nothing new to sell.</p>
+          </div>
+          <div class="o-item">
+            <span class="o-kick">2 · Relationship · by Sept 5</span>
+            <h3>Name and brief a new exec sponsor</h3>
+            <p>Ask Theo who inherited Renee Alvarado's remit, update the economic
+              buyer in Salesforce, and get 30 minutes with them before any term
+              conversation starts.</p>
+          </div>
+          <div class="o-item">
+            <span class="o-kick">3 · Commercial · by Sept 15</span>
+            <h3>Answer the three-year question with a proposal</h3>
+            <p>Price the multi-year term against the adoption plan, so the renewal
+              rests on usage that is climbing, and put it in front of the new
+              sponsor well before October 31.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 · Closer — 021: the one number in the cream pill -->
+      <div class="ppt-slide o-invert" data-slide="o-qbr-close">
+        <div class="o-dots"></div>
+        <div class="o-brand"><span class="o-mark"></span>Northfield Supply Co.</div>
+        <div class="o-stamp">What next quarter turns on · Q3 FY26</div>
+        <div class="o-pill">Field service to 60%<small>by October 31</small></div>
+        <div class="o-close-cols">
+          <div>
+            <div class="k">The one number</div>
+            <h3>Two onboarding sessions and a named owner</h3>
+            <p>Worth about 26 weekly users — it moves activation back to 66% without selling a seat.</p>
+          </div>
+          <div>
+            <div class="k">The one date</div>
+            <h3>Renewal notice closes Oct 31</h3>
+            <p>Everything commercial has to be agreed before it, which puts the term conversation in September.</p>
+          </div>
+          <div>
+            <div class="k">Two things I could not pull</div>
+            <p><strong>No Q2 satisfaction score</strong> — the survey was never sent, so the field is blank rather than carrying Q1's 4.2 forward. <strong>Field-service usage before June 12</strong> sits under an SSO group renamed mid-quarter, so April and May are not comparable and the trend starts June 12.</p>
+          </div>
+        </div>
+        <div class="o-saved">Saved to Drive › Accounts/Northfield/QBR · sources listed on slide 1</div>
+      </div>
+
+    </template>
+
+    <script>
+      const DESIGN_WIDTH = 1280;
+
+      class PowerPointViewer {
+        constructor(container, config = {}) {
+          this.container = typeof container === "string" ? document.querySelector(container) : container;
+          this.maxSlides = 6;
+          this.title = config.title || "Presentation";
+          this.currentIndex = 0;
+
+          const source = document.querySelector(config.slidesTemplate || "#ppt-slides");
+          const all = source ? Array.from(source.content.querySelectorAll(".ppt-slide")) : [];
+          if (all.length > this.maxSlides) {
+            console.warn(`[PowerPointViewer] ${all.length} slides provided; capping to ${this.maxSlides}.`);
+          }
+          this.slides = all.slice(0, this.maxSlides);
+
+          this.viewportFrame = this.container.querySelector(".ppt-slide-frame");
+          this.thumbnailsPanel = this.container.querySelector(".ppt-slides-panel");
+          this.counter = this.container.querySelector(".ppt-slide-counter");
+          this.prevBtn = this.container.querySelector(".ppt-nav-btn.prev");
+          this.nextBtn = this.container.querySelector(".ppt-nav-btn.next");
+          this.titleBar = this.container.querySelector(".ppt-titlebar-text");
+          this.scaleFrame = this.container.parentElement; // .ppt-scale-frame
+
+          this.SCALED_BREAKPOINT = 400;
+          this.SCALED_FACTOR = 0.9;
+
+          this.init();
+        }
+
+        init() {
+          if (this.titleBar) this.titleBar.textContent = `${this.title}.pptx - PowerPoint`;
+          document.title = this.title;
+          this.renderThumbnails();
+          this.bindEvents();
+          this.showSlide(0);
+          this.updateScale();
+          this.rescaleAll();
+          // Rescale on resize — viewport AND every thumbnail.
+          new ResizeObserver(() => {
+            this.updateScale();
+            this.rescaleAll();
+          }).observe(this.container);
+          if (this.scaleFrame) {
+            new ResizeObserver(() => {
+              this.updateScale();
+              this.rescaleAll();
+            }).observe(this.scaleFrame);
+          }
+        }
+
+        /** Below the breakpoint, hold a fixed 0.9 scale and set the
+            ppt-app's pre-scale width/height to containerSize / 0.9 so the
+            visual fills the container exactly. The internal layout
+            (chrome + slide canvas) stays responsive at all sizes. */
+        updateScale() {
+          if (!this.scaleFrame) return;
+          const w = this.scaleFrame.clientWidth;
+          const h = this.scaleFrame.clientHeight;
+          if (w <= this.SCALED_BREAKPOINT) {
+            this.container.style.width = (w / this.SCALED_FACTOR) + "px";
+            this.container.style.height = (h / this.SCALED_FACTOR) + "px";
+          } else {
+            this.container.style.width = "";
+            this.container.style.height = "";
+          }
+        }
+
+        /** Wrap a slide clone in a sized container and scale it to fit. */
+        mountSlide(slide, wrapper) {
+          wrapper.innerHTML = "";
+          const clone = slide.cloneNode(true);
+          wrapper.appendChild(clone);
+          this.scaleSlide(wrapper);
+        }
+
+        scaleSlide(wrapper) {
+          const slide = wrapper.querySelector(".ppt-slide");
+          if (!slide) return;
+          // Use offsetWidth (layout width), NOT getBoundingClientRect().width.
+          // In scaled mode the .ppt-app carries transform: scale(0.9), and
+          // getBoundingClientRect would report the post-transform size — which
+          // would compound with the slide's own scale and leave the slide
+          // under-filling the frame (white gap bottom-right). offsetWidth
+          // ignores ancestor transforms, so the slide fills the frame's layout
+          // box and the ancestor scale is applied once, to both, together.
+          const width = wrapper.offsetWidth;
+          if (width > 0) {
+            slide.style.transform = `scale(${width / DESIGN_WIDTH})`;
+          }
+        }
+
+        rescaleAll() {
+          this.scaleSlide(this.viewportFrame);
+          this.thumbnailsPanel?.querySelectorAll(".ppt-thumbnail-inner").forEach((w) => this.scaleSlide(w));
+        }
+
+        renderThumbnails() {
+          if (!this.thumbnailsPanel) return;
+          this.thumbnailsPanel.innerHTML = "";
+          this.slides.forEach((slide, i) => {
+            const thumb = document.createElement("div");
+            thumb.className = "ppt-thumbnail" + (i === 0 ? " active" : "");
+            thumb.dataset.index = String(i);
+            const inner = document.createElement("div");
+            inner.className = "ppt-thumbnail-inner";
+            thumb.appendChild(inner);
+            this.thumbnailsPanel.appendChild(thumb);
+            this.mountSlide(slide, inner);
+          });
+        }
+
+        showSlide(index) {
+          if (this.slides.length === 0) return;
+          this.currentIndex = Math.max(0, Math.min(index, this.slides.length - 1));
+          this.mountSlide(this.slides[this.currentIndex], this.viewportFrame);
+          this.counter.textContent = `${this.currentIndex + 1} of ${this.slides.length}`;
+          this.prevBtn.disabled = this.currentIndex === 0;
+          this.nextBtn.disabled = this.currentIndex === this.slides.length - 1;
+          this.thumbnailsPanel?.querySelectorAll(".ppt-thumbnail").forEach((t, i) => {
+            t.classList.toggle("active", i === this.currentIndex);
+          });
+        }
+
+        prev() { this.showSlide(this.currentIndex - 1); }
+        next() { this.showSlide(this.currentIndex + 1); }
+
+        bindEvents() {
+          this.prevBtn?.addEventListener("click", () => this.prev());
+          this.nextBtn?.addEventListener("click", () => this.next());
+          this.thumbnailsPanel?.addEventListener("click", (e) => {
+            const thumb = e.target.closest(".ppt-thumbnail");
+            if (thumb) this.showSlide(parseInt(thumb.dataset.index, 10));
+          });
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") this.prev();
+            if (e.key === "ArrowRight") this.next();
+          });
+
+          let startX = 0;
+          this.container.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+          this.container.addEventListener("touchend", (e) => {
+            const diff = startX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) diff > 0 ? this.next() : this.prev();
+          }, { passive: true });
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const firstTitle = document
+          .querySelector("#ppt-slides")
+          ?.content?.querySelector(".ppt-slide")
+          ?.dataset?.title;
+        new PowerPointViewer("#ppt-viewer", {
+          title: firstTitle || "Presentation",
+          slidesTemplate: "#ppt-slides",
+        });
+      });
+    </script>
+    </div>
+</body>
+</html>

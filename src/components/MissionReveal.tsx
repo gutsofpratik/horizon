@@ -1,0 +1,1 @@
+export function MissionReveal(){return <section className="mission-scroll audited-mission"><div className="reference-mission"><h1><strong>AI research and tools that bring intelligence closer.</strong>{' '}AI will change how we learn, build, and work. Horizons Lab explores models, agents, and the tools that help people shape what comes next.</h1></div></section>}

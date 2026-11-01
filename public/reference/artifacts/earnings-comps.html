@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dunhollow Q3 FY26 — earnings comps</title>
+    <style>
+      :root { color-scheme: light; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        height: 100%;
+      }
+      body {
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        line-height: 1.5;
+        /* Default: clip overflow. The frame below switches to scroll
+           when the scaled-mode container query kicks in. */
+        overflow: hidden;
+      }
+
+      /* ----- Scale frame -----
+         Acts as the scroll container when the artifact renders at a fixed
+         natural size and is scaled down. A container query lets the scaled
+         mode kick in based on the parent's width, not the viewport. */
+      .ppt-scale-frame {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        container-type: inline-size;
+      }
+
+      /* ----- PowerPoint chrome (preserved from original) ----- */
+      .ppt-app {
+        background: #f3f2f1;
+        overflow: hidden;
+        border-radius: 8px;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        /* Pinned to desktop size — chrome stays constant until the
+           scaled-mode container query takes over. */
+        font-size: 14px;
+        transform-origin: top left;
+      }
+
+      /* ----- Scaled mode: <= 400px container width -----
+         Pin a natural design footprint, scale it 80%, and let the frame
+         scroll for anything that doesn't fit. */
+      @container (max-width: 400px) {
+        .ppt-scale-frame {
+          overflow: hidden;
+        }
+        .ppt-app {
+          /* width + height set by JS so visual fills the container at
+             a fixed 0.9 scale; chrome layout adapts to the available
+             width the same way it does above the breakpoint. */
+          transform: scale(0.9);
+        }
+      }
+      .ppt-titlebar {
+        display: flex;
+        align-items: center;
+        padding: 0.7em 1em;
+        background: #c43e1c;
+        gap: 0.8em;
+      }
+      .ppt-titlebar-icon {
+        width: 1.4em;
+        height: 1.4em;
+        background: white;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8em;
+        color: #c43e1c;
+      }
+      .ppt-titlebar-text {
+        flex: 1;
+        color: white;
+        font-size: 0.9em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .ppt-main {
+        display: flex;
+        background: #e1dfdd;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .ppt-slides-panel {
+        /* Caps at 11em, but never wider than 20% of the app width. */
+        width: min(11em, 20%);
+        flex-shrink: 0;
+        background: #f3f2f1;
+        border-right: 1px solid #d2d0ce;
+        padding: 0.8em;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5em;
+        overflow-y: scroll;
+        scrollbar-width: thin;
+        scrollbar-color: #a19f9d transparent;
+      }
+      .ppt-slides-panel::-webkit-scrollbar { width: 4px; }
+      .ppt-slides-panel::-webkit-scrollbar-track { background: transparent; }
+      .ppt-slides-panel::-webkit-scrollbar-thumb { background: #a19f9d; border-radius: 2px; }
+      .ppt-slides-panel::-webkit-scrollbar-thumb:hover { background: #8a8886; }
+
+      .ppt-thumbnail {
+        background: white;
+        border: 0.15em solid transparent;
+        border-radius: 0.2em;
+        padding: 0.2em;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+      }
+      .ppt-thumbnail.active { border-color: #c43e1c; }
+      .ppt-thumbnail:hover:not(.active) { border-color: #a4a4a4; }
+
+      .ppt-viewport-area {
+        flex: 1;
+        padding: 1.5em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        overflow: hidden;
+      }
+      .ppt-slide-frame {
+        background: white;
+        box-shadow: 0 0.15em 0.5em rgba(0, 0, 0, 0.15);
+        width: 100%;
+        max-width: 100%;
+      }
+
+      /* ----- Slide canvas -----
+         Every slide is rendered at a fixed 1280x720 design size.
+         The wrapper (frame or thumbnail-inner) creates a 16:9 box and
+         scales the slide via CSS transform to fit. Authors size content
+         in px using this 1280x720 canvas — same units PowerPoint uses. */
+      .ppt-thumbnail-inner,
+      .ppt-slide-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+      }
+      .ppt-thumbnail-inner { border-radius: 0.15em; }
+
+      .ppt-slide {
+        /* Fixed design canvas. Authors compose against this size. */
+        width: 1280px;
+        height: 720px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: top left;
+        background: #ffffff;
+        color: #1f1f1f;
+        overflow: hidden;
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      }
+
+      /* ----- Built-in slide layouts -----
+         Pick one via data-layout="...". All sizes are px against the
+         1280x720 canvas. Custom slides omit data-layout and add their
+         own scoped CSS inside a <style> block in the <template>. */
+      .ppt-slide[data-layout="title"] {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 110px 140px;
+        background: linear-gradient(135deg, #c43e1c 0%, #8a2a12 100%);
+        color: white;
+      }
+      .ppt-slide[data-layout="title"] h1 { font-size: 84px; font-weight: 600; line-height: 1.1; }
+      .ppt-slide[data-layout="title"] p { font-size: 32px; margin-top: 24px; opacity: 0.9; }
+
+      .ppt-slide[data-layout="bullets"] {
+        padding: 80px 100px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+      .ppt-slide[data-layout="bullets"] h2 { font-size: 56px; color: #c43e1c; font-weight: 600; }
+      .ppt-slide[data-layout="bullets"] ul { padding-left: 48px; display: flex; flex-direction: column; gap: 20px; }
+      .ppt-slide[data-layout="bullets"] li { font-size: 32px; line-height: 1.4; }
+
+      .ppt-slide[data-layout="two-column"] {
+        padding: 80px 100px;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 32px;
+      }
+      .ppt-slide[data-layout="two-column"] h2 { font-size: 56px; color: #c43e1c; font-weight: 600; }
+      .ppt-slide[data-layout="two-column"] .cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+      }
+      .ppt-slide[data-layout="two-column"] .col h3 { font-size: 34px; font-weight: 600; margin-bottom: 16px; }
+      .ppt-slide[data-layout="two-column"] .col p { font-size: 26px; line-height: 1.5; }
+
+      .ppt-slide[data-layout="stat"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 80px;
+        text-align: center;
+        gap: 24px;
+      }
+      .ppt-slide[data-layout="stat"] .big-number { font-size: 240px; font-weight: 700; color: #c43e1c; line-height: 1; }
+      .ppt-slide[data-layout="stat"] .caption { font-size: 38px; color: #605e5c; max-width: 900px; }
+
+      .ppt-slide[data-layout="closing"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 100px;
+        text-align: center;
+        gap: 32px;
+        background: #1f1f1f;
+        color: white;
+      }
+      .ppt-slide[data-layout="closing"] h2 { font-size: 80px; font-weight: 600; }
+      .ppt-slide[data-layout="closing"] p { font-size: 32px; opacity: 0.85; }
+
+      /* ═══════════════════════════════════════════════════════════════
+         TERMINAL NAVY · refined — deck system, prefix t-
+         Sampled from refs 010/031. Title and closer on 010's #001e29
+         with a generated dot-matrix sphere; interior on 031's #113b49
+         under a sparse square-dot field. Menlo mono, #7fd1c4 brights,
+         amber flags. All sizes px against the 1280x720 canvas.
+         ═══════════════════════════════════════════════════════════════ */
+      .ppt-slide[data-slide^="t-"] {
+        --t-navy: #113b49;
+        --t-deep: #001e29;
+        --t-bright: #7fd1c4;
+        --t-ink: #eef6f4;
+        --t-soft: #8fb0b7;
+        --t-amber: #e8a13f;
+        --t-mono: "Menlo", "SF Mono", monospace;
+        font-family: var(--t-mono);
+        color: var(--t-ink);
+        background: var(--t-navy);
+      }
+      .ppt-slide[data-slide^="t-"].t-deep { background: var(--t-deep); }
+      .t-field { position: absolute; inset: 0; opacity: 0.9; }
+      .t-sphere { position: absolute; left: 380px; top: 100px; width: 520px; height: 520px;
+        background: url("data:image/png;base64,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") center / contain no-repeat; }
+      .t-sphere.is-bookend { left: -120px; top: 330px; width: 520px; height: 520px; opacity: 0.8; }
+      .t-eq { position: absolute; display: flex; align-items: flex-end; gap: 3px; }
+      .t-eq i { display: block; width: 4px; background: var(--t-ink); }
+      .t-brand { position: absolute; font-family: "Helvetica Neue", Helvetica, sans-serif;
+        font-size: 19px; font-weight: 500; letter-spacing: 0.01em; }
+      .t-eyebrow { position: absolute; font-size: 13px; letter-spacing: 0.22em; color: var(--t-soft); }
+      .t-eyebrow.is-ink { letter-spacing: 0.3em; color: var(--t-ink); }
+      .t-h { position: absolute; font-size: 38px; line-height: 1.35; letter-spacing: 0.01em; font-weight: 400; }
+      .t-h em { font-style: normal; color: var(--t-bright); }
+      .t-foot { position: absolute; font-size: 12px; letter-spacing: 0.08em; color: var(--t-soft); line-height: 1.8; }
+      .t-flag { color: var(--t-amber); }
+      .t-line { position: absolute; font-size: 15px; letter-spacing: 0.06em; color: var(--t-soft); }
+      .t-line em { font-style: normal; color: var(--t-bright); }
+
+      .t-tbl { position: absolute; font-size: 16px; line-height: 2.3; white-space: pre; }
+      .t-tbl .dim { color: var(--t-soft); }
+      .t-tbl em { font-style: normal; color: var(--t-bright); }
+      .t-tbl .hero { color: var(--t-bright); }
+      .t-tbl .amber { color: var(--t-amber); }
+      .t-tbl.is-tight { font-size: 15px; line-height: 2.1; }
+      .t-bars { position: absolute; }
+      .t-note { position: absolute; font-size: 12.5px; line-height: 1.9; color: var(--t-soft); letter-spacing: 0.04em; }
+      .t-note b { font-weight: 400; color: var(--t-ink); }
+
+      .ppt-bottombar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.4em;
+        background: #f3f2f1;
+        border-top: 1px solid #d2d0ce;
+        font-size: 0.8em;
+        color: #605e5c;
+      }
+      .ppt-nav-btn {
+        width: 1.8em;
+        height: 1.8em;
+        border: 1px solid #d2d0ce;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #323130;
+        transition: all 0.1s ease;
+      }
+      .ppt-nav-btn:hover:not(:disabled) { background: #f3f2f1; border-color: #8a8886; }
+      .ppt-nav-btn:disabled { opacity: 0.4; cursor: default; }
+      .ppt-nav-btn svg { width: 1em; height: 1em; }
+      .ppt-slide-counter { font-size: 0.85em; color: #323130; flex: 1; text-align: center; }
+
+      @media (max-width: 480px) {
+        .ppt-viewport-area { padding: 1em; }
+      }
+    
+
+      /* ----- Card zoom (Skylar 2026-09-03: "content of excel sheet
+         too small to read", extended to every facsimile family) -----
+         Card surfaces pin this document to its authoring box and
+         transform-scale the whole iframe into a far smaller window — the
+         library rails at ~0.44, the modal artifact well at 0.6, the card
+         face at 0.61 — so this chrome's em-derived text was landing at
+         4-6px. Authoring the document zoomed puts the surface's shrink on
+         legible type instead. Here the slide is a fixed composition, so its stage is pinned below rather than left to shrink.
+         Gated on the LAYOUT width so the roles band's ~608px artifact
+         mount and the phone embed page stay 1x. */
+      @media (min-width: 1000px) {
+        .ppt-app {
+          font-size: calc(14px * 1.6);
+        }
+        /* The slide must not pay for the chrome. Every one of these is em-based
+           and would grow with the base size above — the rail and the stage
+           padding stealing width, the two bars stealing height — and the slide
+           is height-capped by its 16:9 frame, so it would come out SMALLER than
+           before the zoom. Pinned to px (and trimmed a little) so the chrome
+           text grows and the slide gains room instead of losing it. */
+        .ppt-slides-panel {
+          width: 154px;
+          padding: 8px;
+        }
+        .ppt-viewport-area {
+          padding: 10px;
+        }
+        .ppt-titlebar {
+          padding: 7px 14px;
+        }
+        .ppt-bottombar {
+          padding: 5px;
+        }
+      }
+</style>
+</head>
+<body>
+<div class="ppt-scale-frame">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+      <pattern id="t-dots" width="26" height="26" patternUnits="userSpaceOnUse">
+        <rect x="4" y="4" width="3" height="3" fill="#26525f"/>
+        <rect x="17" y="12" width="3" height="3" fill="#224b58"/>
+        <rect x="9" y="20" width="3" height="3" fill="#26525f"/>
+      </pattern>
+      <pattern id="t-dots2" width="74" height="74" patternUnits="userSpaceOnUse">
+        <rect x="12" y="30" width="3" height="3" fill="#2f6472"/>
+        <rect x="52" y="10" width="3" height="3" fill="#3b7a88"/>
+        <rect x="34" y="58" width="3" height="3" fill="#2f6472"/>
+      </pattern>
+      <radialGradient id="t-sphere" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#7fd1c4" stop-opacity="0.95"/>
+        <stop offset="0.62" stop-color="#7fd1c4" stop-opacity="0.5"/>
+        <stop offset="1" stop-color="#7fd1c4" stop-opacity="0"/>
+      </radialGradient>
+      <mask id="t-sphere-mask">
+        <circle cx="330" cy="330" r="320" fill="url(#t-sphere)"/>
+      </mask>
+    </defs></svg>
+    
+    <div class="ppt-app" id="ppt-viewer">
+      <div class="ppt-titlebar">
+        <div class="ppt-titlebar-icon">P</div>
+        <span class="ppt-titlebar-text">Presentation.pptx - PowerPoint</span>
+      </div>
+
+      <div class="ppt-main">
+        <div class="ppt-slides-panel"></div>
+        <div class="ppt-viewport-area">
+          <div class="ppt-slide-frame"></div>
+        </div>
+      </div>
+
+      <div class="ppt-bottombar">
+        <button class="ppt-nav-btn prev" aria-label="Previous slide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" /></svg>
+        </button>
+        <span class="ppt-slide-counter">1 of 1</span>
+        <button class="ppt-nav-btn next" aria-label="Next slide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <template id="ppt-slides">
+      <!-- 1 · Title — the call, first -->
+      <div class="ppt-slide t-deep" data-slide="t-ec-title" data-title="dunhollow-q3-fy26-earnings-comps">
+        <svg class="t-field" viewBox="0 0 1280 720" preserveAspectRatio="none"><rect width="1280" height="720" fill="url(#t-dots)" opacity="0.55"/></svg>
+        <div class="t-sphere"></div>
+        <div class="t-eq" style="left:56px; top:48px; height:22px">
+          <i style="height:9px"></i><i style="height:16px"></i><i style="height:22px"></i><i style="height:12px"></i>
+        </div>
+        <div class="t-brand" style="left:88px; top:47px">Dunhollow</div>
+        <div class="t-eyebrow" style="left:0; right:0; top:262px; text-align:center">Q3 FY26 · EARNINGS COMPS · PREPARED WEDNESDAY, AUG 27</div>
+        <div class="t-h" style="left:0; right:0; top:304px; text-align:center">dunhollow beat.<br><em>the whole beat is price</em></div>
+        <div class="t-line" style="left:0; right:0; top:432px; text-align:center">$45.1M vs $43.8M est <em>+3.0%</em> · +21% y/y · guide +$1.5M at mid</div>
+        <div class="t-foot" style="left:56px; bottom:44px">SRC: TRANSCRIPT + 10-Q · CONSENSUS: TWO BROKERS · PRICING PULL 08-19<br>PRINTED 2026-08-26</div>
+        <div class="t-foot" style="right:56px; bottom:44px; text-align:right">01 / 05</div>
+      </div>
+
+      <!-- 2 · Guidance & KPIs vs consensus -->
+      <div class="ppt-slide" data-slide="t-ec-kpis">
+        <svg class="t-field" viewBox="0 0 1280 720" preserveAspectRatio="none">
+          <rect width="1280" height="720" fill="url(#t-dots)" opacity="0.5"/>
+        </svg>
+        <div class="t-eq" style="left:56px; top:48px; height:22px">
+          <i style="height:9px"></i><i style="height:16px"></i><i style="height:22px"></i><i style="height:12px"></i>
+        </div>
+        <div class="t-brand" style="left:88px; top:47px">Dunhollow</div>
+        <div class="t-eyebrow" style="right:56px; top:52px">Q3 ACTUAL vs CONSENSUS</div>
+        <div class="t-eyebrow is-ink" style="left:56px; top:128px">WHERE THE PRINT LANDED</div>
+
+        <div class="t-tbl" style="left:56px; top:186px">
+<span class="dim">metric               actual     cons.    landed</span>
+revenue              $45.1M    $43.8M    <em>beat +3.0%</em>
+subscription         $34.8M    $34.2M    <em>beat +1.8%</em>
+payments &amp; other     $10.3M     $9.6M    <em>beat +7.3%</em>
+<span class="amber">gross margin          71.0%     72.5%    miss −1.5p ⚑</span>
+<span class="amber">techs on platform   121,300   123,000    miss −1,700 ⚑</span>
+arpu / tech / mo     $95.60    $92.10    <em>beat +3.8%</em>
+free cash flow        $4.1M     $3.2M    <em>beat +$0.9M</em></div>
+
+        <div class="t-tbl is-tight" style="left:872px; top:186px">
+<span class="dim">guide</span>
+q4 revenue     $46.5–47.5M
+<span class="dim">  +3–5% seq · first full qtr</span>
+<span class="dim">  at the new list</span>
+fy26 revenue   $175–177M
+<span class="dim">  raised from $172–176M</span>
+<span class="dim">  +$1.5M mid, all pricing</span>
+gross margin   ~71% flat
+<span class="dim">  payments mix holds it</span>
+<span class="dim">  under software-only peers</span></div>
+
+        <div class="t-foot" style="left:56px; bottom:44px"><span class="t-flag">⚑ BOTH MISSES ARE VOLUME</span> — THE BEAT IS THE JUNE LIST INCREASE (TEAM $59 → $69); CHURN DID NOT MOVE</div>
+        <div class="t-foot" style="right:56px; bottom:44px; text-align:right">02 / 05</div>
+      </div>
+
+      <!-- 3 · Quarter over quarter -->
+      <div class="ppt-slide" data-slide="t-ec-qoq">
+        <svg class="t-field" viewBox="0 0 1280 720" preserveAspectRatio="none">
+          <rect width="1280" height="720" fill="url(#t-dots)" opacity="0.5"/>
+        </svg>
+        <div class="t-eq" style="left:56px; top:48px; height:22px">
+          <i style="height:9px"></i><i style="height:16px"></i><i style="height:22px"></i><i style="height:12px"></i>
+        </div>
+        <div class="t-brand" style="left:88px; top:47px">Dunhollow</div>
+        <div class="t-eyebrow" style="right:56px; top:52px">Q2 → Q3 FY26</div>
+        <div class="t-eyebrow is-ink" style="left:56px; top:128px">ARPU DID THE GROWING</div>
+
+        <div class="t-tbl is-tight" style="left:56px; top:180px">
+<span class="dim">metric                  q2        q3     Δ q/q</span>
+revenue             $42.1M    $45.1M     +7.1%
+subscription        $32.7M    $34.8M     +6.4%
+payments &amp; other     $9.4M    $10.3M     +9.6%
+techs on platform  119,200   121,300    +2,100
+arpu / tech / mo    $91.50    $95.60    <em>+$4.10</em>
+net rev retention     113%      111%    −2 pts
+gross margin         72.4%     71.0%   −1.4 pts
+s&amp;m % of revenue       38%       36%    −2 pts
+free cash flow       $3.4M     $4.1M    +$0.7M</div>
+
+        <div class="t-bars" style="left:872px; top:180px">
+          <div class="t-eyebrow" style="position:static; display:block; margin-bottom:18px">NET TECH ADDS</div>
+          <svg viewBox="0 0 340 260" style="width:340px; height:260px; overflow:visible">
+            <g fill="#3a6b78">
+              <g transform="translate(30,0)">  <rect y="16"  width="10" height="4"/><rect y="28" width="10" height="4"/><rect y="40" width="10" height="4"/><rect y="52" width="10" height="4"/><rect y="64" width="10" height="4"/><rect y="76" width="10" height="4"/><rect y="88" width="10" height="4"/><rect y="100" width="10" height="4"/><rect y="112" width="10" height="4"/><rect y="124" width="10" height="4"/><rect y="136" width="10" height="4"/><rect y="148" width="10" height="4"/><rect y="160" width="10" height="4"/><rect y="172" width="10" height="4"/><rect y="184" width="10" height="4"/><rect y="196" width="10" height="4"/><rect y="208" width="10" height="4"/></g>
+              <g transform="translate(140,0)"> <rect y="52" width="10" height="4"/><rect y="64" width="10" height="4"/><rect y="76" width="10" height="4"/><rect y="88" width="10" height="4"/><rect y="100" width="10" height="4"/><rect y="112" width="10" height="4"/><rect y="124" width="10" height="4"/><rect y="136" width="10" height="4"/><rect y="148" width="10" height="4"/><rect y="160" width="10" height="4"/><rect y="172" width="10" height="4"/><rect y="184" width="10" height="4"/><rect y="196" width="10" height="4"/><rect y="208" width="10" height="4"/></g>
+            </g>
+            <g fill="#e8a13f">
+              <g transform="translate(250,0)"> <rect y="112" width="10" height="4"/><rect y="124" width="10" height="4"/><rect y="136" width="10" height="4"/><rect y="148" width="10" height="4"/><rect y="160" width="10" height="4"/><rect y="172" width="10" height="4"/><rect y="184" width="10" height="4"/><rect y="196" width="10" height="4"/><rect y="208" width="10" height="4"/></g>
+            </g>
+            <g fill="#7d9aa2" font-size="12" font-family="Menlo, monospace" text-anchor="middle">
+              <text x="35" y="6">+4,100</text><text x="145" y="42">+3,400</text>
+              <text x="255" y="102" fill="#e8a13f">+2,100</text>
+              <text x="35" y="236">Q1</text><text x="145" y="236">Q2</text><text x="255" y="236">Q3</text>
+            </g>
+            <line x1="0" y1="216" x2="340" y2="216" stroke="#2c5a68" stroke-width="1"/>
+          </svg>
+          <div class="t-note" style="position:static; display:block; margin-top:14px; max-width:340px">june increase landed mid-quarter — q3 carries ~2 months of it. payments attach 22.8% of revenue (q2: 22.3%).</div>
+        </div>
+
+        <div class="t-foot" style="left:56px; bottom:44px; max-width:1040px"><span class="t-flag">⚑ WATCH:</span> ADDS DECELERATED THREE QUARTERS RUNNING — THE Q4 RAISE IS A FULL QUARTER AT NEW LIST, NOT ADDS COMING BACK</div>
+        <div class="t-foot" style="right:56px; bottom:44px; text-align:right">03 / 05</div>
+      </div>
+
+      <!-- 4 · Comps vs the named peers -->
+      <div class="ppt-slide" data-slide="t-ec-comps">
+        <svg class="t-field" viewBox="0 0 1280 720" preserveAspectRatio="none">
+          <rect width="1280" height="720" fill="url(#t-dots)" opacity="0.5"/>
+        </svg>
+        <div class="t-eq" style="left:56px; top:48px; height:22px">
+          <i style="height:9px"></i><i style="height:16px"></i><i style="height:22px"></i><i style="height:12px"></i>
+        </div>
+        <div class="t-brand" style="left:88px; top:47px">Dunhollow</div>
+        <div class="t-eyebrow" style="right:56px; top:52px">SRC: PEER-COMPS-TEMPLATE.XLSX / COMPS</div>
+        <div class="t-eyebrow is-ink" style="left:56px; top:128px">AGAINST THE PEER SET · FIELD SERVICE PLATFORMS</div>
+
+        <div class="t-tbl" style="left:56px; top:190px">
+<span class="dim">company            ltm rev    yoy     gm    nrr   ev/ltm</span>
+<span class="hero">dunhollow            $169M   +21%    71%   111%     5.8×</span>
+sablefen             $232M   +14%    74%   109%     4.9×
+stellhaven           $187M   +17%    69%   114%     6.4×
+fennmere             $141M    +9%    76%   105%     3.6×
+<span class="dim">pellmoor (est.)      ~$58M   +24%      —      —        —</span>
+<span class="dim">median, public       $187M   +14%    74%   109%     4.9×</span></div>
+
+        <div class="t-note" style="left:56px; top:496px; max-width:1000px"><b>marked est., excluded from the median:</b> pellmoor is private — its row is built from the april funding announcement’s run-rate. consensus is a two-broker snapshot; stellhaven’s quarter ends sep 30, so its ltm trails the others by a quarter.</div>
+
+        <div class="t-foot" style="left:56px; bottom:44px; max-width:1040px">READ: FASTEST GROWER OF THE PUBLIC SET, ONE TURN BELOW STELLHAVEN — THE PEER CUTTING PRICE (LAUNCH $69 → $59) TO CHASE ENTRY-TIER VOLUME</div>
+        <div class="t-foot" style="right:56px; bottom:44px; text-align:right">04 / 05</div>
+      </div>
+
+      <!-- 5 · What to watch — closer, sphere bookend -->
+      <div class="ppt-slide t-deep" data-slide="t-ec-notes">
+        <svg class="t-field" viewBox="0 0 1280 720" preserveAspectRatio="none"><rect width="1280" height="720" fill="url(#t-dots)" opacity="0.55"/></svg>
+        <div class="t-sphere is-bookend"></div>
+        <div class="t-eq" style="left:56px; top:48px; height:22px">
+          <i style="height:9px"></i><i style="height:16px"></i><i style="height:22px"></i><i style="height:12px"></i>
+        </div>
+        <div class="t-brand" style="left:88px; top:47px">Dunhollow</div>
+        <div class="t-eyebrow" style="right:56px; top:52px">INTO Q4</div>
+        <div class="t-h" style="left:56px; top:128px">what to <em>watch</em></div>
+
+        <div class="t-tbl is-tight" style="left:56px; top:250px; white-space:normal; max-width:520px; line-height:1.9">
+<span class="dim">FROM THE CALL</span><br>“we priced for the value we ship, and churn didn’t move. expect the same discipline on the enterprise list next year.” — dunhollow cfo, aug 26. three of four peers raised list this year; stellhaven is the only one cutting.</div>
+
+        <div class="t-tbl is-tight" style="left:672px; top:250px; white-space:normal; max-width:520px; line-height:1.9">
+<span class="dim">HOLDING, AND SLIPPING</span><br>gross churn held flat through the increase, but nrr slipped 2 pts as expansion slowed. payments attach climbed to <em>22.8% of revenue</em> at 2.9% + 30¢ — revenue-accretive, margin-dilutive.</div>
+
+        <div class="t-foot" style="left:56px; bottom:44px">SRC: EARNINGS TRANSCRIPT + 10-Q (AUG 26) · CONSENSUS: TWO BROKERS · LIST PRICES: PRICING PULL AUG 19</div>
+        <div class="t-foot" style="right:56px; bottom:44px; text-align:right">05 / 05</div>
+      </div>
+
+    </template>
+
+    <script>
+      const DESIGN_WIDTH = 1280;
+
+      class PowerPointViewer {
+        constructor(container, config = {}) {
+          this.container = typeof container === "string" ? document.querySelector(container) : container;
+          this.maxSlides = 7;
+          this.title = config.title || "Presentation";
+          this.currentIndex = 0;
+
+          const source = document.querySelector(config.slidesTemplate || "#ppt-slides");
+          const all = source ? Array.from(source.content.querySelectorAll(".ppt-slide")) : [];
+          if (all.length > this.maxSlides) {
+            console.warn(`[PowerPointViewer] ${all.length} slides provided; capping to ${this.maxSlides}.`);
+          }
+          this.slides = all.slice(0, this.maxSlides);
+
+          this.viewportFrame = this.container.querySelector(".ppt-slide-frame");
+          this.thumbnailsPanel = this.container.querySelector(".ppt-slides-panel");
+          this.counter = this.container.querySelector(".ppt-slide-counter");
+          this.prevBtn = this.container.querySelector(".ppt-nav-btn.prev");
+          this.nextBtn = this.container.querySelector(".ppt-nav-btn.next");
+          this.titleBar = this.container.querySelector(".ppt-titlebar-text");
+          this.scaleFrame = this.container.parentElement; // .ppt-scale-frame
+
+          this.SCALED_BREAKPOINT = 400;
+          this.SCALED_FACTOR = 0.9;
+
+          this.init();
+        }
+
+        init() {
+          if (this.titleBar) this.titleBar.textContent = `${this.title}.pptx - PowerPoint`;
+          document.title = this.title;
+          this.renderThumbnails();
+          this.bindEvents();
+          this.showSlide(0);
+          this.updateScale();
+          this.rescaleAll();
+          // Rescale on resize — viewport AND every thumbnail.
+          new ResizeObserver(() => {
+            this.updateScale();
+            this.rescaleAll();
+          }).observe(this.container);
+          if (this.scaleFrame) {
+            new ResizeObserver(() => {
+              this.updateScale();
+              this.rescaleAll();
+            }).observe(this.scaleFrame);
+          }
+        }
+
+        /** Below the breakpoint, hold a fixed 0.9 scale and set the
+            ppt-app's pre-scale width/height to containerSize / 0.9 so the
+            visual fills the container exactly. The internal layout
+            (chrome + slide canvas) stays responsive at all sizes. */
+        updateScale() {
+          if (!this.scaleFrame) return;
+          const w = this.scaleFrame.clientWidth;
+          const h = this.scaleFrame.clientHeight;
+          if (w <= this.SCALED_BREAKPOINT) {
+            this.container.style.width = (w / this.SCALED_FACTOR) + "px";
+            this.container.style.height = (h / this.SCALED_FACTOR) + "px";
+          } else {
+            this.container.style.width = "";
+            this.container.style.height = "";
+          }
+        }
+
+        /** Wrap a slide clone in a sized container and scale it to fit. */
+        mountSlide(slide, wrapper) {
+          wrapper.innerHTML = "";
+          const clone = slide.cloneNode(true);
+          wrapper.appendChild(clone);
+          this.scaleSlide(wrapper);
+        }
+
+        scaleSlide(wrapper) {
+          const slide = wrapper.querySelector(".ppt-slide");
+          if (!slide) return;
+          // Use offsetWidth (layout width), NOT getBoundingClientRect().width.
+          // In scaled mode the .ppt-app carries transform: scale(0.9), and
+          // getBoundingClientRect would report the post-transform size — which
+          // would compound with the slide's own scale and leave the slide
+          // under-filling the frame (white gap bottom-right). offsetWidth
+          // ignores ancestor transforms, so the slide fills the frame's layout
+          // box and the ancestor scale is applied once, to both, together.
+          const width = wrapper.offsetWidth;
+          if (width > 0) {
+            slide.style.transform = `scale(${width / DESIGN_WIDTH})`;
+          }
+        }
+
+        rescaleAll() {
+          this.scaleSlide(this.viewportFrame);
+          this.thumbnailsPanel?.querySelectorAll(".ppt-thumbnail-inner").forEach((w) => this.scaleSlide(w));
+        }
+
+        renderThumbnails() {
+          if (!this.thumbnailsPanel) return;
+          this.thumbnailsPanel.innerHTML = "";
+          this.slides.forEach((slide, i) => {
+            const thumb = document.createElement("div");
+            thumb.className = "ppt-thumbnail" + (i === 0 ? " active" : "");
+            thumb.dataset.index = String(i);
+            const inner = document.createElement("div");
+            inner.className = "ppt-thumbnail-inner";
+            thumb.appendChild(inner);
+            this.thumbnailsPanel.appendChild(thumb);
+            this.mountSlide(slide, inner);
+          });
+        }
+
+        showSlide(index) {
+          if (this.slides.length === 0) return;
+          this.currentIndex = Math.max(0, Math.min(index, this.slides.length - 1));
+          this.mountSlide(this.slides[this.currentIndex], this.viewportFrame);
+          this.counter.textContent = `${this.currentIndex + 1} of ${this.slides.length}`;
+          this.prevBtn.disabled = this.currentIndex === 0;
+          this.nextBtn.disabled = this.currentIndex === this.slides.length - 1;
+          this.thumbnailsPanel?.querySelectorAll(".ppt-thumbnail").forEach((t, i) => {
+            t.classList.toggle("active", i === this.currentIndex);
+          });
+        }
+
+        prev() { this.showSlide(this.currentIndex - 1); }
+        next() { this.showSlide(this.currentIndex + 1); }
+
+        bindEvents() {
+          this.prevBtn?.addEventListener("click", () => this.prev());
+          this.nextBtn?.addEventListener("click", () => this.next());
+          this.thumbnailsPanel?.addEventListener("click", (e) => {
+            const thumb = e.target.closest(".ppt-thumbnail");
+            if (thumb) this.showSlide(parseInt(thumb.dataset.index, 10));
+          });
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") this.prev();
+            if (e.key === "ArrowRight") this.next();
+          });
+
+          let startX = 0;
+          this.container.addEventListener("touchstart", (e) => { startX = e.touches[0].clientX; }, { passive: true });
+          this.container.addEventListener("touchend", (e) => {
+            const diff = startX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) diff > 0 ? this.next() : this.prev();
+          }, { passive: true });
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const firstTitle = document
+          .querySelector("#ppt-slides")
+          ?.content?.querySelector(".ppt-slide")
+          ?.dataset?.title;
+        new PowerPointViewer("#ppt-viewer", {
+          title: firstTitle || "Presentation",
+          slidesTemplate: "#ppt-slides",
+        });
+      });
+    </script>
+    </div>
+</body>
+</html>

@@ -1,62 +1,66 @@
-import { useState } from 'react';
-import { HorizonShaderCanvas } from './components/HorizonShaderCanvas';
-import { Header } from './components/Header';
-import { AestheticHero } from './components/AestheticHero';
-import { ProductShowcase } from './components/ProductShowcase';
-import { LabGrid } from './components/LabGrid';
-import { InteractiveHardwareSizer } from './components/InteractiveHardwareSizer';
-import { EcosystemCards } from './components/EcosystemCards';
-import { DownloadView } from './components/DownloadView';
-import { MinimalFooter } from './components/MinimalFooter';
-import { DownloadModal } from './components/DownloadModal';
-
+import { useEffect } from "react";
+import { PageMotion } from "./components/PageMotion";
+import { LabPages } from "./components/LabPages";
+import { LabHome } from "./components/LabHome";
+import { HorizonProduct } from "./components/HorizonProduct";
+import { SiteHeader, SiteFooter } from "./components/ReferenceChrome";
+import { DesignedContentPage, AboutLabPage } from "./components/PageFamilies";
+import { sitePages, pageIndexes } from "./data/sitePages";
+import { TrustPages, CookieConsent, trustPageRoutes } from "./components/TrustPages";
+import { FormPages, AdminPage } from "./components/FormPages";
+import {PromptHandoff} from './components/PromptHandoff';
+import "./App.css";
+import "./motion.css";
+import "./editorial.css";
+import "./reference-match.css";
+import "./dark.css";
+import "./reference-rebuild.css";
+import "./lab-reference-rebuild.css";
+import "./rebuild-support.css";
 export function App() {
-  const [activePage, setActivePage] = useState<string>('horizon');
-  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
-
+  const rawPage = window.location.pathname.replace(/^\/+|\/+$/g, "");
+  const aliases:Record<string,string> = {'product/overview':'horizon','products/horizon':'horizon','company/about':'about','company/contact':'contact','research/training':'research/model-training','legal/privacy':'privacy','legal/cookies':'cookies','legal/terms':'terms','downloads':'download','use-cases/call-preparation':'use-cases/call-prep','use-cases/earnings-comparison':'use-cases/earnings-comps','use-cases/role-review':'use-cases/jd-check','use-cases/research-brief':'use-cases/legal-research','use-cases/quarterly-deck':'use-cases/qbr-deck','use-cases/month-end-review':'use-cases/month-end-close','use-cases/survey-summary':'use-cases/survey-readout','use-cases/meeting-preparation':'use-cases/deposition-prep','use-cases/crm-review':'use-cases/crm-hygiene','use-cases/budget-planning':'use-cases/h2-reforecast','use-cases/compensation-review':'use-cases/merit-analysis','use-cases/document-review':'use-cases/contract-redline'};
+  const page = aliases[rawPage] ?? rawPage;
+  const product = page === "horizon" || page === 'product' || page.startsWith('product/') || page.startsWith('download') || page === 'use-cases' || page.startsWith('use-cases/');
+  useEffect(() => {
+    if (page === "") {
+      document.title = "Horizons Lab — Intelligence is a beginning";
+      if (["#horizon", "#download"].includes(window.location.hash))
+        window.location.replace(
+          "/horizon" +
+            (window.location.hash === "#download" ? "#download" : ""),
+        );
+    }
+  }, [page]);
   return (
-    <div className="relative min-h-screen bg-[#030305] text-[#ECECEC] font-sans selection:bg-white selection:text-black">
-      {/* Living Interactive Ambient Canvas Shader */}
-      <HorizonShaderCanvas />
-
-      {/* Floating Minimal Glass Header */}
-      <Header
-        activePage={activePage}
-        setActivePage={setActivePage}
-        onOpenDownload={() => setDownloadModalOpen(true)}
-      />
-
-      {/* Main Experience */}
-      <main className="relative z-10">
-        {/* Dynamic Metallic Hero */}
-        <AestheticHero onOpenDownload={() => setDownloadModalOpen(true)} />
-
-        {/* Real Horizon Workspace Showcase with actual screenshots */}
-        <ProductShowcase onOpenDownload={() => setDownloadModalOpen(true)} />
-
-        {/* The Open Source AI Lab: What We Do (Model training, tools, apps) */}
-        <LabGrid />
-
-        {/* Interactive Hardware Sizer & Model Matcher */}
-        <InteractiveHardwareSizer />
-
-        {/* The 3 Core Repositories of the Ecosystem */}
-        <EcosystemCards />
-
-        {/* Official Release Matrix v0.3.3 */}
-        <DownloadView />
+    <div className={`editorial-shell ${product ? "horizon-page" : "lab-page"}`}>
+      <PageMotion />
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <SiteHeader product={product} />
+      <main id="main" tabIndex={-1}>
+        {page === "" ? (
+          <LabHome />
+        ) : page === 'horizon' ? (
+          <HorizonProduct />
+        ) : page === 'waitlist' || page === 'contact' ? (
+          <FormPages kind={page === 'contact' ? 'contact' : 'waitlist'}/>
+        ) : page === 'admin' ? (
+          <AdminPage/>
+        ) : trustPageRoutes.includes(page) ? (
+          <>{page.startsWith('download')&&<PromptHandoff/>}<TrustPages page={page}/></>
+        ) : page === 'about' ? (
+          <AboutLabPage/>
+        ) : sitePages[page] || pageIndexes[page] || page === 'sitemap' ? (
+          <DesignedContentPage page={page}/>
+        ) : (
+          <LabPages page={page} />
+        )}
       </main>
-
-      {/* Minimalist Editorial Footer */}
-      <MinimalFooter />
-
-      {/* Instant OS Download Modal */}
-      <DownloadModal
-        isOpen={downloadModalOpen}
-        onClose={() => setDownloadModalOpen(false)}
-      />
+      <SiteFooter product={product} />
+      <CookieConsent />
     </div>
   );
 }
-
 export default App;

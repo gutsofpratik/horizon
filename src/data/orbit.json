@@ -1,0 +1,683 @@
+{
+  "media": [
+    {
+      "kind": "still",
+      "src": "",
+      "image": "/reference/rebuild/d76e10379aeb875c2376dc46807cd99c1920f841c3611f2a5310a31da02fe7a8.webp",
+      "personas": []
+    },
+    {
+      "kind": "clip",
+      "src": "https://assets.claude.com/4676a43221d029e5b9d38964bace1bc7ad75b301.mp4",
+      "image": "/reference/rebuild/7310b005fd8a33a142f32a2e9594566534f50f1c1f1cbb7c1dc7194f786d1b3a.webp",
+      "personas": [
+        "finance"
+      ]
+    },
+    {
+      "kind": "still",
+      "src": "",
+      "image": "/reference/rebuild/056009d218f449c307a8c18b26feb360ac365589617831db2b74b76dfc8df82b.webp",
+      "personas": [
+        "finance"
+      ]
+    },
+    {
+      "kind": "clip",
+      "src": "https://assets.claude.com/d7c29ad3ece555428b01caed7e84dba3c484e104.mp4",
+      "image": "/reference/rebuild/e841939e2499401b393ab065106c20b18c296fdf42895810da090b2bfdd9aabf.webp",
+      "personas": [
+        "finance"
+      ]
+    },
+    {
+      "kind": "clip",
+      "src": "https://assets.claude.com/45fb4539045677c1b8c02defae09c5ded307e30d.mp4",
+      "image": "/reference/rebuild/24564115ea74da615db307170437c8490b9643cd36483b7d5cbded7c7496836f.webp",
+      "personas": [
+        "finance"
+      ]
+    },
+    {
+      "kind": "clip",
+      "src": "https://assets.claude.com/4b2ba814e1b0ae7999e50b0480a77e9f937c49a3.mp4",
+      "image": "/reference/rebuild/2e3b322218bbc6fd265aba43580eb44b8e472009ed837d60e34af2c575f7f256.webp",
+      "personas": []
+    },
+    {
+      "kind": "still",
+      "src": "",
+      "image": "/reference/rebuild/54707a7ea38e57c95588547e7093e99ec8aaab6db83fa13cb1059f2959ad1518.webp",
+      "personas": []
+    },
+    {
+      "kind": "clip",
+      "src": "https://assets.claude.com/4cabad7efa1f4cd99f489320f5a15861a95e5deb.mp4",
+      "image": "/reference/rebuild/0aa3969abeb962800a38efcb24969f4b0ad7d1ab41c1579fee54189324cab6fa.webp",
+      "personas": []
+    },
+    {
+      "kind": "still",
+      "src": "",
+      "image": "/reference/rebuild/ec6ef08daeec70cdc21a03b994678d88cae4698b3e2926931eb14695fddc6d22.webp",
+      "personas": [
+        "finance"
+      ]
+    },
+    {
+      "kind": "still",
+      "src": "",
+      "image": "/reference/rebuild/456c1ca9e6e5660c83fd8246dc549376bc3eccc25cd3488dc25d4cfbd0175045.webp",
+      "personas": []
+    },
+    {
+      "kind": "still",
+      "src": "",
+      "image": "/reference/rebuild/78513e6a0a494f34bb1405fe5a0eddaaf5282c04348bd2a63373f50492de938d.webp",
+      "personas": [
+        "finance"
+      ]
+    },
+    {
+      "kind": "still",
+      "src": "",
+      "image": "/reference/rebuild/24badff664a5e5f5977c530601c56b59c01f498b5b3d4f15750a4516e939c687.webp",
+      "personas": []
+    }
+  ],
+  "cases": [
+    {
+      "slug": "campaign-readout",
+      "title": "Campaign readout",
+      "personas": [
+        "marketing",
+        "everyone"
+      ]
+    },
+    {
+      "slug": "asset-creation",
+      "title": "Asset creation",
+      "personas": [
+        "marketing"
+      ]
+    },
+    {
+      "slug": "audience-intelligence",
+      "title": "Audience intelligence",
+      "personas": [
+        "marketing"
+      ]
+    },
+    {
+      "slug": "call-prep",
+      "title": "Call prep",
+      "personas": [
+        "sales",
+        "everyone"
+      ]
+    },
+    {
+      "slug": "qbr-deck",
+      "title": "QBR deck",
+      "personas": [
+        "sales"
+      ]
+    },
+    {
+      "slug": "crm-hygiene",
+      "title": "CRM hygiene",
+      "personas": [
+        "sales"
+      ]
+    },
+    {
+      "slug": "earnings-comps",
+      "title": "Earnings comps",
+      "personas": [
+        "finance"
+      ]
+    },
+    {
+      "slug": "month-end-close",
+      "title": "Month-end close",
+      "personas": [
+        "finance"
+      ]
+    },
+    {
+      "slug": "h2-reforecast",
+      "title": "Budget reforecast",
+      "personas": [
+        "finance",
+        "everyone"
+      ]
+    },
+    {
+      "slug": "jd-check",
+      "title": "JD check",
+      "personas": [
+        "hr"
+      ]
+    },
+    {
+      "slug": "survey-readout",
+      "title": "Survey readout",
+      "personas": [
+        "hr"
+      ]
+    },
+    {
+      "slug": "merit-analysis",
+      "title": "Merit analysis",
+      "personas": [
+        "hr"
+      ]
+    },
+    {
+      "slug": "legal-research",
+      "title": "Legal research drafting",
+      "personas": [
+        "legal"
+      ]
+    },
+    {
+      "slug": "deposition-prep",
+      "title": "Deposition prep",
+      "personas": [
+        "legal"
+      ]
+    },
+    {
+      "slug": "contract-redline",
+      "title": "Contract redline",
+      "personas": [
+        "legal"
+      ]
+    },
+    {
+      "slug": "action-tracking",
+      "title": "Action tracking",
+      "personas": [
+        "product"
+      ]
+    },
+    {
+      "slug": "feedback-digest",
+      "title": "Feedback digest",
+      "personas": [
+        "product"
+      ]
+    },
+    {
+      "slug": "metrics-dashboard",
+      "title": "Metrics dashboard",
+      "personas": [
+        "product"
+      ]
+    }
+  ],
+  "tiles": [
+    {
+      "size": 138,
+      "media": null,
+      "pattern": "squiggle",
+      "example": {
+        "slug": "campaign-readout",
+        "title": "Campaign readout",
+        "personas": [
+          "marketing",
+          "everyone"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggle90Flip",
+      "example": {
+        "slug": "call-prep",
+        "title": "Call prep",
+        "personas": [
+          "sales",
+          "everyone"
+        ]
+      }
+    },
+    {
+      "size": 164,
+      "media": null,
+      "pattern": "squiggle90",
+      "example": {
+        "slug": "audience-intelligence",
+        "title": "Audience intelligence",
+        "personas": [
+          "marketing"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggle180Flip",
+      "example": {
+        "slug": "qbr-deck",
+        "title": "QBR deck",
+        "personas": [
+          "sales"
+        ]
+      }
+    },
+    {
+      "size": 138,
+      "media": {
+        "kind": "still",
+        "src": "",
+        "image": "/reference/rebuild/ec6ef08daeec70cdc21a03b994678d88cae4698b3e2926931eb14695fddc6d22.webp",
+        "personas": [
+          "finance"
+        ]
+      },
+      "pattern": "squiggle180",
+      "example": {
+        "slug": "earnings-comps",
+        "title": "Earnings comps",
+        "personas": [
+          "finance"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggle270Flip",
+      "example": {
+        "slug": "crm-hygiene",
+        "title": "CRM hygiene",
+        "personas": [
+          "sales"
+        ]
+      }
+    },
+    {
+      "size": 164,
+      "media": {
+        "kind": "still",
+        "src": "",
+        "image": "/reference/rebuild/78513e6a0a494f34bb1405fe5a0eddaaf5282c04348bd2a63373f50492de938d.webp",
+        "personas": [
+          "finance"
+        ]
+      },
+      "pattern": "squiggle270",
+      "example": {
+        "slug": "month-end-close",
+        "title": "Month-end close",
+        "personas": [
+          "finance"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggleFlip",
+      "example": {
+        "slug": "jd-check",
+        "title": "JD check",
+        "personas": [
+          "hr"
+        ]
+      }
+    },
+    {
+      "size": 138,
+      "media": {
+        "kind": "clip",
+        "src": "https://assets.claude.com/45fb4539045677c1b8c02defae09c5ded307e30d.mp4",
+        "image": "/reference/rebuild/24564115ea74da615db307170437c8490b9643cd36483b7d5cbded7c7496836f.webp",
+        "personas": [
+          "finance"
+        ]
+      },
+      "pattern": "squiggle",
+      "example": {
+        "slug": "h2-reforecast",
+        "title": "Budget reforecast",
+        "personas": [
+          "finance",
+          "everyone"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggle90Flip",
+      "example": {
+        "slug": "survey-readout",
+        "title": "Survey readout",
+        "personas": [
+          "hr"
+        ]
+      }
+    },
+    {
+      "size": 164,
+      "media": null,
+      "pattern": "squiggle90",
+      "example": {
+        "slug": "legal-research",
+        "title": "Legal research drafting",
+        "personas": [
+          "legal"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggle180Flip",
+      "example": {
+        "slug": "merit-analysis",
+        "title": "Merit analysis",
+        "personas": [
+          "hr"
+        ]
+      }
+    },
+    {
+      "size": 138,
+      "media": null,
+      "pattern": "squiggle180",
+      "example": {
+        "slug": "deposition-prep",
+        "title": "Deposition prep",
+        "personas": [
+          "legal"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggle270Flip",
+      "example": {
+        "slug": "action-tracking",
+        "title": "Action tracking",
+        "personas": [
+          "product"
+        ]
+      }
+    },
+    {
+      "size": 164,
+      "media": null,
+      "pattern": "squiggle270",
+      "example": {
+        "slug": "contract-redline",
+        "title": "Contract redline",
+        "personas": [
+          "legal"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggleFlip",
+      "example": {
+        "slug": "metrics-dashboard",
+        "title": "Metrics dashboard",
+        "personas": [
+          "product"
+        ]
+      }
+    },
+    {
+      "size": 138,
+      "media": {
+        "kind": "still",
+        "src": "",
+        "image": "/reference/rebuild/d76e10379aeb875c2376dc46807cd99c1920f841c3611f2a5310a31da02fe7a8.webp",
+        "personas": []
+      },
+      "pattern": "squiggle180",
+      "example": {
+        "slug": "asset-creation",
+        "title": "Asset creation",
+        "personas": [
+          "marketing"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggle270Flip",
+      "example": {
+        "slug": "qbr-deck",
+        "title": "QBR deck",
+        "personas": [
+          "sales"
+        ]
+      }
+    },
+    {
+      "size": 164,
+      "media": {
+        "kind": "clip",
+        "src": "https://assets.claude.com/4cabad7efa1f4cd99f489320f5a15861a95e5deb.mp4",
+        "image": "/reference/rebuild/0aa3969abeb962800a38efcb24969f4b0ad7d1ab41c1579fee54189324cab6fa.webp",
+        "personas": []
+      },
+      "pattern": "squiggle270",
+      "example": {
+        "slug": "campaign-readout",
+        "title": "Campaign readout",
+        "personas": [
+          "marketing",
+          "everyone"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggleFlip",
+      "example": {
+        "slug": "call-prep",
+        "title": "Call prep",
+        "personas": [
+          "sales",
+          "everyone"
+        ]
+      }
+    },
+    {
+      "size": 138,
+      "media": {
+        "kind": "clip",
+        "src": "https://assets.claude.com/4b2ba814e1b0ae7999e50b0480a77e9f937c49a3.mp4",
+        "image": "/reference/rebuild/2e3b322218bbc6fd265aba43580eb44b8e472009ed837d60e34af2c575f7f256.webp",
+        "personas": []
+      },
+      "pattern": "squiggle",
+      "example": {
+        "slug": "audience-intelligence",
+        "title": "Audience intelligence",
+        "personas": [
+          "marketing"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": {
+        "kind": "still",
+        "src": "",
+        "image": "/reference/rebuild/056009d218f449c307a8c18b26feb360ac365589617831db2b74b76dfc8df82b.webp",
+        "personas": [
+          "finance"
+        ]
+      },
+      "pattern": "squiggle90Flip",
+      "example": {
+        "slug": "earnings-comps",
+        "title": "Earnings comps",
+        "personas": [
+          "finance"
+        ]
+      }
+    },
+    {
+      "size": 164,
+      "media": null,
+      "pattern": "squiggle90",
+      "example": {
+        "slug": "jd-check",
+        "title": "JD check",
+        "personas": [
+          "hr"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": {
+        "kind": "clip",
+        "src": "https://assets.claude.com/d7c29ad3ece555428b01caed7e84dba3c484e104.mp4",
+        "image": "/reference/rebuild/e841939e2499401b393ab065106c20b18c296fdf42895810da090b2bfdd9aabf.webp",
+        "personas": [
+          "finance"
+        ]
+      },
+      "pattern": "squiggle180Flip",
+      "example": {
+        "slug": "month-end-close",
+        "title": "Month-end close",
+        "personas": [
+          "finance"
+        ]
+      }
+    },
+    {
+      "size": 138,
+      "media": null,
+      "pattern": "squiggle180",
+      "example": {
+        "slug": "survey-readout",
+        "title": "Survey readout",
+        "personas": [
+          "hr"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": {
+        "kind": "clip",
+        "src": "https://assets.claude.com/4676a43221d029e5b9d38964bace1bc7ad75b301.mp4",
+        "image": "/reference/rebuild/7310b005fd8a33a142f32a2e9594566534f50f1c1f1cbb7c1dc7194f786d1b3a.webp",
+        "personas": [
+          "finance"
+        ]
+      },
+      "pattern": "squiggle270Flip",
+      "example": {
+        "slug": "h2-reforecast",
+        "title": "Budget reforecast",
+        "personas": [
+          "finance",
+          "everyone"
+        ]
+      }
+    },
+    {
+      "size": 164,
+      "media": {
+        "kind": "still",
+        "src": "",
+        "image": "/reference/rebuild/456c1ca9e6e5660c83fd8246dc549376bc3eccc25cd3488dc25d4cfbd0175045.webp",
+        "personas": []
+      },
+      "pattern": "squiggle270",
+      "example": {
+        "slug": "merit-analysis",
+        "title": "Merit analysis",
+        "personas": [
+          "hr"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggleFlip",
+      "example": {
+        "slug": "action-tracking",
+        "title": "Action tracking",
+        "personas": [
+          "product"
+        ]
+      }
+    },
+    {
+      "size": 138,
+      "media": {
+        "kind": "still",
+        "src": "",
+        "image": "/reference/rebuild/54707a7ea38e57c95588547e7093e99ec8aaab6db83fa13cb1059f2959ad1518.webp",
+        "personas": []
+      },
+      "pattern": "squiggle",
+      "example": {
+        "slug": "contract-redline",
+        "title": "Contract redline",
+        "personas": [
+          "legal"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggle90Flip",
+      "example": {
+        "slug": "metrics-dashboard",
+        "title": "Metrics dashboard",
+        "personas": [
+          "product"
+        ]
+      }
+    },
+    {
+      "size": 164,
+      "media": {
+        "kind": "still",
+        "src": "",
+        "image": "/reference/rebuild/24badff664a5e5f5977c530601c56b59c01f498b5b3d4f15750a4516e939c687.webp",
+        "personas": []
+      },
+      "pattern": "squiggle90",
+      "example": {
+        "slug": "deposition-prep",
+        "title": "Deposition prep",
+        "personas": [
+          "legal"
+        ]
+      }
+    },
+    {
+      "size": 152,
+      "media": null,
+      "pattern": "squiggle180Flip",
+      "example": {
+        "slug": "feedback-digest",
+        "title": "Feedback digest",
+        "personas": [
+          "product"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Northfield SOW v2 — redlined</title>
+    <style>
+      :root { color-scheme: light; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; }
+      body {
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        line-height: 1.5;
+        /* Default: clip overflow. The frame below switches to scroll
+           when the scaled-mode container query kicks in. */
+        overflow: hidden;
+      }
+
+      /* ----- Scale frame -----
+         Acts as the scroll container when the artifact renders at a fixed
+         natural size and is scaled down. A container query lets the scaled
+         mode kick in based on the parent's width, not the viewport. */
+      .doc-scale-frame {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        container-type: inline-size;
+      }
+
+      /* ----- Word chrome (matches PPT / Excel viewer style) ----- */
+      .doc-app {
+        background: #f3f2f1;
+        overflow: hidden;
+        border-radius: 8px;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        /* Pinned to desktop size — chrome stays constant until the
+           scaled-mode container query takes over. */
+        font-size: 14px;
+        transform-origin: top left;
+      }
+
+      /* ----- Scaled mode: <= 400px container width -----
+         Pin a natural design footprint, scale it 80%, and let the frame
+         scroll for anything that doesn't fit. */
+      @container (max-width: 400px) {
+        .doc-scale-frame {
+          overflow: hidden;
+        }
+        .doc-app {
+          /* width + height set by JS so visual fills the container at
+             a fixed 0.9 scale; chrome layout adapts to the available
+             width the same way it does above the breakpoint. */
+          transform: scale(0.9);
+        }
+      }
+      .doc-titlebar {
+        display: flex;
+        align-items: center;
+        padding: 0.7em 1em;
+        background: #2b579a;
+        gap: 0.8em;
+      }
+      .doc-titlebar-icon {
+        width: 1.4em;
+        height: 1.4em;
+        background: white;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8em;
+        color: #2b579a;
+      }
+      .doc-titlebar-text {
+        flex: 1;
+        color: white;
+        font-size: 0.9em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .doc-main {
+        display: flex;
+        background: #e1dfdd;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      /* ----- Outline (Navigation pane) panel ----- */
+      .doc-outline-panel {
+        width: min(13em, 22%);
+        background: #f3f2f1;
+        border-right: 1px solid #d2d0ce;
+        padding: 0.6em 0.6em 0.6em 0.6em;
+        display: flex;
+        flex-direction: column;
+        gap: 0.1em;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #a19f9d transparent;
+        transition: width 0.25s ease, padding 0.25s ease;
+        flex-shrink: 0;
+        container-type: inline-size;
+      }
+      .doc-outline-panel::-webkit-scrollbar { width: 4px; }
+      .doc-outline-panel::-webkit-scrollbar-track { background: transparent; }
+      .doc-outline-panel::-webkit-scrollbar-thumb { background: #a19f9d; border-radius: 2px; }
+      .doc-outline-panel.collapsed {
+        width: 2.4em;
+        padding: 0.6em 0.3em;
+      }
+      .doc-outline-panel.collapsed .doc-outline-title,
+      .doc-outline-panel.collapsed .doc-outline-item {
+        display: none;
+      }
+      .doc-outline-panel.collapsed .doc-outline-header {
+        justify-content: center;
+        padding: 0;
+        margin: 0;
+        border-bottom: none;
+      }
+
+      .doc-outline-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.4em;
+        padding: 0.1em 0.2em 0.5em 0.4em;
+        margin-bottom: 0.3em;
+        border-bottom: 1px solid #e1dfdd;
+        flex-shrink: 0;
+      }
+      .doc-outline-title {
+        font-size: 0.8em;
+        font-weight: 600;
+        color: #2b579a;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .doc-outline-toggle {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #605e5c;
+        padding: 0.2em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 3px;
+        flex-shrink: 0;
+        transition: background 0.1s ease, transform 0.25s ease;
+      }
+      .doc-outline-toggle:hover { background: #e8e8e8; color: #2b579a; }
+      .doc-outline-toggle svg { width: 1.1em; height: 1.1em; }
+      .doc-outline-panel.collapsed .doc-outline-toggle { transform: rotate(180deg); }
+
+      .doc-outline-item {
+        font-size: clamp(0.7em, 7cqw, 0.85em);
+        color: #323130;
+        padding: 0.35em 0.6em;
+        border-radius: 3px;
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: background 0.1s ease, color 0.1s ease;
+      }
+      .doc-outline-item:hover { background: #e8e8e8; }
+      .doc-outline-item.active {
+        background: #eaf1fb;
+        color: #2b579a;
+        font-weight: 600;
+        padding-left: 0.3em;
+        padding-right: 0.3em;
+      }
+      .doc-outline-item[data-level="2"] { padding-left: 1.5em; font-size: clamp(0.7em, 6.5cqw, 0.8em); }
+      .doc-outline-item[data-level="3"] { padding-left: 2.5em; font-size: clamp(0.7em, 6cqw, 0.78em); color: #605e5c; }
+
+      /* ----- Pages area (scrolls vertically) ----- */
+      .doc-pages-area {
+        flex: 1;
+        padding: 1.2em 1em;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1em;
+        scrollbar-width: thin;
+        scrollbar-color: #a19f9d transparent;
+      }
+      .doc-pages-area::-webkit-scrollbar { width: 6px; }
+      .doc-pages-area::-webkit-scrollbar-track { background: transparent; }
+      .doc-pages-area::-webkit-scrollbar-thumb { background: #a19f9d; border-radius: 3px; }
+
+      .doc-page-frame {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        aspect-ratio: 816 / 1056; /* US letter portrait */
+        background: white;
+        box-shadow: 0 0.15em 0.5em rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      /* ----- Page canvas -----
+         Every page is rendered at a fixed 816 x 1056 design size
+         (US letter at 96dpi). The frame creates a letter-sized box and
+         scales the page via CSS transform to fit. Authors size content
+         in px against this canvas — same numbers Word uses. */
+      .doc-page {
+        width: 816px;
+        height: 1056px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: top left;
+        background: #ffffff;
+        color: #1f1f1f;
+        padding: 96px 96px; /* ~1in margins at 96dpi */
+        font-family: "Calibri", "Segoe UI", -apple-system, Roboto, sans-serif;
+        font-size: 22px; /* ≈11pt */
+        line-height: 1.5;
+        overflow: hidden;
+      }
+
+      /* ----- Base typography inside a page -----
+         Headings follow Word's default Office theme (Calibri Light,
+         never semibold; #2F5496 for H1/H2, #1F3763 for H3) — semibold
+         web headings read as a designed page, not .docx output. */
+      .doc-page h1 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 56px;
+        font-weight: 600;
+        color: #141413;
+        line-height: 1.15;
+        margin-bottom: 18px;
+      }
+      .doc-page h2 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 36px;
+        font-weight: 600;
+        color: #141413;
+        line-height: 1.2;
+        margin-top: 28px;
+        margin-bottom: 12px;
+      }
+      .doc-page h3 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 28px;
+        font-weight: 600;
+        color: #141413;
+        line-height: 1.3;
+        margin-top: 22px;
+        margin-bottom: 10px;
+      }
+      .doc-page h4 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 22px;
+        font-weight: 400;
+        color: #444;
+        font-style: italic;
+        margin-top: 18px;
+        margin-bottom: 8px;
+      }
+      .doc-page p { margin-bottom: 14px; }
+      .doc-page p + p { margin-top: -2px; }
+      .doc-page ul, .doc-page ol { margin: 0 0 14px 40px; }
+      .doc-page li { margin-bottom: 6px; }
+      /* Word's built-in Quote style: indented italic gray. No border
+         or shaded box — those are web-callout grammar. */
+      .doc-page blockquote {
+        margin: 14px 0 14px 48px;
+        color: #404040;
+        font-style: italic;
+      }
+      .doc-page blockquote .doc-quote-source {
+        display: block;
+        margin-top: 6px;
+        font-style: normal;
+        font-size: 19px;
+        color: #605e5c;
+      }
+      .doc-page hr {
+        border: none;
+        border-top: 1px solid #d2d0ce;
+        margin: 20px 0;
+      }
+      .doc-page a { color: #0563c1; text-decoration: underline; }
+      .doc-page code {
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 0.92em;
+      }
+      .doc-page table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 14px 0;
+        font-size: 20px;
+      }
+      /* Default "Table Grid": thin uniform borders, bold unfilled
+         header, no banding — filled/zebra tables are a styled theme
+         Word only applies when asked. */
+      .doc-page th, .doc-page td {
+        border: 1px solid #808080;
+        padding: 8px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .doc-page th {
+        font-weight: 700; background: #e8edf2; color: #141413;
+      }
+
+      /* Page-number footer (optional, auto-inserted) */
+      .doc-page-number {
+        position: absolute;
+        bottom: 40px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 16px;
+        color: #a19f9d;
+      }
+
+      /* ----- Built-in page layouts -----
+         Apply via data-layout="..." on a .doc-page. All sizes are px
+         against the 816x1056 canvas. */
+      .doc-page[data-layout="letterhead"] {
+        padding-top: 200px;
+      }
+      .doc-page[data-layout="letterhead"]::before {
+        content: attr(data-letterhead);
+        position: absolute;
+        top: 70px;
+        left: 96px;
+        right: 96px;
+        font-size: 32px;
+        font-weight: 600;
+        color: #2b579a;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #2b579a;
+      }
+
+      .doc-page[data-layout="cover"] {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 140px 96px;
+        background: linear-gradient(180deg, #2b579a 0%, #1a3e74 100%);
+        color: white;
+      }
+      .doc-page[data-layout="cover"] h1 {
+        font-size: 72px;
+        font-weight: 700;
+        color: white;
+        line-height: 1.1;
+        margin-bottom: 24px;
+      }
+      .doc-page[data-layout="cover"] .doc-subtitle {
+        font-size: 30px;
+        font-weight: 400;
+        opacity: 0.9;
+        margin-bottom: 60px;
+      }
+      .doc-page[data-layout="cover"] .doc-meta {
+        font-size: 20px;
+        opacity: 0.8;
+        line-height: 1.8;
+      }
+
+      .doc-page[data-layout="memo"] {
+        padding: 96px;
+      }
+      /* Memo head as Word would write it: plain "To: / From:" bold-label
+         lines in body ink, closed by a thin bottom-border rule — not a
+         colored small-caps label grid. */
+      .doc-page[data-layout="memo"] .doc-memo-header {
+        font-size: 20px;
+        margin-bottom: 24px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #d2d0ce;
+      }
+      .doc-page[data-layout="memo"] .doc-memo-header dt {
+        float: left;
+        clear: left;
+        font-weight: 700;
+        margin-right: 8px;
+      }
+      .doc-page[data-layout="memo"] .doc-memo-header dt::after { content: ":"; }
+      .doc-page[data-layout="memo"] .doc-memo-header dd {
+        color: #1f1f1f;
+        margin: 0 0 2px 0;
+      }
+
+      /* ----- Bottom bar ----- */
+      .doc-bottombar {
+        display: flex;
+        align-items: center;
+        padding: 0.4em 0.8em;
+        background: #f3f2f1;
+        border-top: 1px solid #d2d0ce;
+        font-size: 0.8em;
+        color: #605e5c;
+        gap: 1em;
+      }
+      .doc-page-counter { flex: 0 0 auto; }
+      .doc-word-count {
+        flex: 1;
+        text-align: right;
+        color: #605e5c;
+      }
+      /* ══════════════════════════════════════════════════════════════
+         TRACKED-CHANGES LAYOUT — data-layout="redline"
+         Word's All Markup view: the text column narrows, a comment
+         gutter opens on the right, edited paragraphs carry a change bar,
+         insertions are underlined and deletions struck in the reviewer's
+         colour. Balloons are positioned by px `top` against the fixed
+         816x1056 page canvas — the same authoring model the rest of the
+         doc layouts use, so a balloon lands exactly where it is put.
+         ══════════════════════════════════════════════════════════════ */
+      .doc-page[data-layout="redline"] {
+        --rl-author: #9b2f6f;      /* one reviewer, one colour, both marks */
+        --rl-gutter: 214px;
+        padding: 92px var(--rl-gutter) 64px 80px;
+        font-size: 18px;
+        line-height: 1.62;
+      }
+
+      /* Markup-view banner: which view, whose marks. */
+      .doc-page[data-layout="redline"] .rl-viewbar {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 20px;
+        background: #f3f2f1;
+        border-bottom: 1px solid #d2d0ce;
+        font-size: 14px; color: #605e5c;
+      }
+      .doc-page[data-layout="redline"] .rl-viewbar strong { color: var(--rl-author); font-weight: 600; }
+
+      .doc-page[data-layout="redline"] h2 { font-size: 26px; margin-top: 22px; margin-bottom: 8px; }
+      .doc-page[data-layout="redline"] h3 { font-size: 20px; margin-top: 18px; margin-bottom: 6px; }
+      .doc-page[data-layout="redline"] p { margin-bottom: 12px; }
+
+      /* Change bar — Word's vertical rule in the left margin. */
+      .doc-page[data-layout="redline"] .rl-changed {
+        position: relative;
+        padding-left: 14px;
+      }
+      .doc-page[data-layout="redline"] .rl-changed::before {
+        content: "";
+        position: absolute; left: -14px; top: 2px; bottom: 2px;
+        width: 2px; background: #4a4a4a;
+      }
+
+      .rl-ins { color: var(--rl-author); text-decoration: underline; }
+      .rl-del { color: var(--rl-author); text-decoration: line-through; }
+
+      /* Comment balloon in the right gutter. */
+      .doc-page[data-layout="redline"] .rl-balloon {
+        position: absolute;
+        right: 22px;
+        width: 172px;
+        background: #fdf6fa;
+        border: 1px solid #e3c3d6;
+        border-left: 3px solid var(--rl-author);
+        /* square: legacy All-Markup balloons have no corner radius (Skylar 9/11) */
+        padding: 9px 11px;
+        font-size: 13px;
+        line-height: 1.45;
+        color: #3a2b34;
+      }
+      .doc-page[data-layout="redline"] .rl-balloon .rl-who {
+        display: block;
+        font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+        color: var(--rl-author); font-weight: 600; margin-bottom: 4px;
+      }
+      .doc-page[data-layout="redline"] .rl-balloon.is-open {
+        background: #fffaf0; border-color: #e4cd9a; border-left-color: #b7791f;
+        color: #5a4715;
+      }
+      .doc-page[data-layout="redline"] .rl-balloon.is-open .rl-who { color: #b7791f; }
+      /* Leader line from the balloon back to the text column. */
+      .doc-page[data-layout="redline"] .rl-balloon::before {
+        content: "";
+        position: absolute; left: -26px; top: 14px;
+        width: 23px; border-top: 1px dashed #c9a8bb;
+      }
+
+      /* Cover block on page 1 of a markup document. */
+      .doc-page[data-layout="redline"] .rl-cover {
+        border-bottom: 2px solid var(--rl-author);
+        padding-bottom: 14px; margin-bottom: 6px;
+      }
+      .doc-page[data-layout="redline"] .rl-cover h1 { font-size: 34px; margin-bottom: 6px; }
+      .doc-page[data-layout="redline"] .rl-cover .rl-cover-meta { font-size: 15px; color: #605e5c; }
+      /* Authored status line, not a badge: plain bold body ink — the
+         reviewer colour belongs only to the tracked changes themselves
+         (ticket 85 round 2, same ruling as crm-hygiene's strip). */
+      .doc-page[data-layout="redline"] .rl-count {
+        display: inline-block; margin-top: 10px;
+        font-size: 14px; color: #1f1f1f; font-weight: 700;
+      }
+    
+
+      /* ----- Card zoom (Skylar 2026-09-03: "content of excel sheet
+         too small to read", extended to every facsimile family) -----
+         Card surfaces pin this document to its authoring box and
+         transform-scale the whole iframe into a far smaller window — the
+         library rails at ~0.44, the modal artifact well at 0.6, the card
+         face at 0.61 — so this chrome's em-derived text was landing at
+         4-6px. Authoring the document zoomed puts the surface's shrink on
+         legible type instead. Here the letter page re-fits itself into whatever the outline panel leaves.
+         Gated on the LAYOUT width so the roles band's ~608px artifact
+         mount and the phone embed page stay 1x. */
+      @media (min-width: 1000px) {
+        .doc-app {
+          font-size: calc(14px * 1.6);
+        }
+      }
+</style>
+  </head>
+  <body>
+    <div class="doc-scale-frame">
+    <div class="doc-app" id="doc-viewer">
+      <div class="doc-titlebar">
+        <div class="doc-titlebar-icon">W</div>
+        <span class="doc-titlebar-text">Document.docx - Word</span>
+      </div>
+
+      <div class="doc-main">
+        <div class="doc-outline-panel">
+          <div class="doc-outline-header">
+            <span class="doc-outline-title">Navigation</span>
+            <button class="doc-outline-toggle" aria-label="Toggle navigation panel" title="Toggle navigation">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 6l-6 6 6 6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="doc-pages-area"></div>
+      </div>
+
+      <div class="doc-bottombar">
+        <span class="doc-page-counter">Page 1 of 1</span>
+        <span class="doc-word-count">0 words</span>
+      </div>
+    </div>
+
+    <!--
+      Q3 deal review — Cowork "Analyze notes" demo.
+      Story: Horizon read a quarter of call notes in Deals/Q3 and wrote
+      the rep a memo: where each open deal stands, what the customer said
+      was blocking it, who has to sign off, objections that recurred
+      across deals, accounts gone quiet, and what it couldn't parse.
+      Every claim quotes the note it came from.
+    -->
+    <template id="doc-pages">
+      <!-- ══════════════════════════════════════════════════════════════
+           CONTRACT REDLINE — value prop 2, "you'll always know what it
+           did". The proof is the file itself: not a summary of the edits
+           but the edits, in the document, where a lawyer would look for
+           them anyway. Six tracked changes and six comments; the two
+           amber balloons are the clauses the playbook does not cover,
+           left for a human rather than decided.
+           Numbers reconcile against the $312k annual fee: 30 days of
+           payment terms ≈ $25,600 of working capital; a 3-month
+           liability cap is $78,000 against the playbook's $312,000.
+           Balloon `top` values are px against the 816x1056 canvas.
+           ══════════════════════════════════════════════════════════════ -->
+
+      <div class="doc-page" data-layout="redline" data-title="Northfield SOW v2 — redlined" data-page-number="true">
+        <div class="rl-viewbar">
+          <span>All Markup · 6 tracked changes, 6 comments</span>
+          <span>Reviewed by <strong>Horizon</strong> · Aug 19, 2026</span>
+        </div>
+
+        <div class="rl-cover">
+          <h1>Statement of Work</h1>
+          <div class="rl-cover-meta">Northfield Supply Co. · v2, received Aug 15, 2026 ·
+            checked against <code>Legal/Playbook.docx</code></div>
+          <span class="rl-count">6 changes · 4 departures from playbook · 2 uncovered</span>
+        </div>
+
+        <h2>4. Fees and payment</h2>
+        <h3>4.2 Payment terms</h3>
+        <p class="rl-changed">Customer shall pay each undisputed invoice within
+          <span class="rl-del">sixty (60)</span> <span class="rl-ins">thirty (30)</span>
+          days of receipt. Invoices are issued monthly in arrears against the
+          annual fee set out in Schedule A.</p>
+        <p class="rl-changed"><span class="rl-ins">Undisputed amounts outstanding
+          more than thirty (30) days past due shall accrue interest at 1.5% per
+          month or the maximum rate permitted by law, whichever is lower.</span></p>
+        <aside class="rl-balloon" style="top:318px">
+          <span class="rl-who">Horizon · 4.2</span>
+          Playbook §3 is Net 30. Net 60 holds about $25,600 of working capital
+          across the $312k annual fee — the largest single-dollar departure in
+          this agreement.
+        </aside>
+        <aside class="rl-balloon" style="top:474px">
+          <span class="rl-who">Horizon · 4.2</span>
+          Playbook §3 requires a late-fee provision. v2 has none, so I added the
+          standard wording rather than leaving the clause silent.
+        </aside>
+
+        <h2>5. Indemnification</h2>
+        <h3>5.1 Intellectual property</h3>
+        <p class="rl-changed">Supplier shall indemnify Customer against any claim
+          that the Services infringe a third-party intellectual property right,
+          <span class="rl-ins">provided that Supplier's total liability under
+          this Section 5.1 shall not exceed two (2) times the fees paid in the
+          twelve (12) months preceding the claim.</span></p>
+        <aside class="rl-balloon" style="top:664px">
+          <span class="rl-who">Horizon · 5.1</span>
+          v2 left this indemnity uncapped. Playbook §7 caps IP indemnity at 2×
+          trailing fees, so the cap is added here — worth pushing back on if
+          they resist.
+        </aside>
+      </div>
+
+      <div class="doc-page" data-layout="redline" data-page-number="true">
+        <div class="rl-viewbar">
+          <span>All Markup · 6 tracked changes, 6 comments</span>
+          <span>Reviewed by <strong>Horizon</strong> · Aug 19, 2026</span>
+        </div>
+
+        <h2>7. Limitation of liability</h2>
+        <h3>7.1 Cap on liability</h3>
+        <p class="rl-changed">Except for the indemnities in Section 5, each
+          party's aggregate liability arising out of this Agreement shall not
+          exceed the fees paid or payable in the
+          <span class="rl-del">three (3)</span> <span class="rl-ins">twelve (12)</span>
+          months preceding the event giving rise to the claim.</p>
+        <aside class="rl-balloon" style="top:150px">
+          <span class="rl-who">Horizon · 7.1</span>
+          Playbook §9 is twelve months. At the current annual fee a three-month
+          cap is $78,000 against $312,000 — a $234,000 gap, and the departure I
+          would push hardest on.
+        </aside>
+
+        <h2>9. Term and termination</h2>
+        <h3>9.3 Termination for convenience</h3>
+        <p class="rl-changed">Either party may terminate this Agreement for
+          convenience on <span class="rl-del">thirty (30)</span>
+          <span class="rl-ins">ninety (90)</span> days' written notice
+          <span class="rl-ins">, such notice not to be given before the first
+          anniversary of the Effective Date</span>.</p>
+        <aside class="rl-balloon" style="top:392px">
+          <span class="rl-who">Horizon · 9.3</span>
+          Playbook §11 requires 90 days and a twelve-month lock. v2 gives 30 days
+          from signature, which would let them exit inside the notice window on
+          the current renewal.
+        </aside>
+
+        <h2>11. General</h2>
+        <h3>11.4 Governing law</h3>
+        <p>This Agreement is governed by the laws of the State of Delaware,
+          without regard to its conflict-of-laws rules. The parties submit to
+          the exclusive jurisdiction of the courts located in Wilmington,
+          Delaware.</p>
+        <aside class="rl-balloon is-open" style="top:640px">
+          <span class="rl-who">Needs a human · 11.4</span>
+          The playbook takes no position on governing law. I have not changed
+          this clause — Delaware may be fine, but it is not my call to make.
+        </aside>
+      </div>
+
+      <div class="doc-page" data-layout="redline" data-page-number="true">
+        <div class="rl-viewbar">
+          <span>All Markup · 6 tracked changes, 6 comments</span>
+          <span>Reviewed by <strong>Horizon</strong> · Aug 19, 2026</span>
+        </div>
+
+        <h2>13. Data and processing</h2>
+        <h3>13.2 Automated processing</h3>
+        <p>Customer acknowledges that the Services may use automated systems to
+          process Customer Data for the purpose of providing and improving the
+          Services, and grants Supplier a licence to do so for the term of this
+          Agreement.</p>
+        <aside class="rl-balloon is-open" style="top:150px">
+          <span class="rl-who">Needs a human · 13.2</span>
+          New in v2 — this clause was not in v1 and the playbook has nothing on
+          automated processing. Unchanged and flagged; someone should decide
+          whether "improving the Services" is acceptable scope.
+        </aside>
+
+        <h2>What I changed, and what I left</h2>
+        <p>Six tracked changes across four clauses, each restoring a stated
+          playbook position: payment terms (§4.2, twice), the IP indemnity cap
+          (§5.1), the liability cap (§7.1), and termination notice (§9.3, twice).
+          Every edit is in the document above rather than described here.</p>
+        <p>Two clauses are marked and unchanged. §11.4 and §13.2 are outside
+          what the playbook covers, so there is no position for me to restore —
+          those are decisions, not corrections, and they are yours.</p>
+        <p>Compared against <code>Legal/Playbook.docx</code> (v6, updated Jun 2,
+          2026) and <code>Contracts/Northfield/SOW-v1.docx</code>. v2 differs
+          from v1 in nine places; the three not mentioned here are typographic.</p>
+      </div>
+
+        </template>
+
+    <script>
+      const DESIGN_WIDTH = 816;
+
+      class WordViewer {
+        constructor(container, config = {}) {
+          this.container = typeof container === "string" ? document.querySelector(container) : container;
+          this.title = config.title || "Document";
+          const source = document.querySelector(config.pagesTemplate || "#doc-pages");
+          this.pages = source ? Array.from(source.content.querySelectorAll(".doc-page")) : [];
+
+          this.pagesArea = this.container.querySelector(".doc-pages-area");
+          this.outlinePanel = this.container.querySelector(".doc-outline-panel");
+          this.outlineToggle = this.container.querySelector(".doc-outline-toggle");
+          this.titleBar = this.container.querySelector(".doc-titlebar-text");
+          this.pageCounter = this.container.querySelector(".doc-page-counter");
+          this.wordCount = this.container.querySelector(".doc-word-count");
+
+          this.pageFrames = [];
+          this.outlineItems = [];
+          this.headings = []; // { el, itemIndex }
+          this.currentPage = 0;
+          this.activeHeadingIdx = 0;
+          this.scaleFrame = this.container.parentElement; // .doc-scale-frame
+          this.SCALED_BREAKPOINT = 400;
+          this.SCALED_FACTOR = 0.9;
+
+          this.init();
+        }
+
+        init() {
+          if (this.titleBar) this.titleBar.textContent = `${this.title}.docx - Word`;
+          document.title = this.title;
+          this.renderPages();
+          this.renderOutline();
+          this.bindOutlineToggle();
+          this.updateWordCount();
+          this.updatePageCounter();
+          this.updateScale();
+          this.rescaleAll();
+          // Observe the pages area so rescaling tracks the sidebar
+          // collapse/expand animation, not just outer-container resizes.
+          const ro = new ResizeObserver(() => {
+            this.updateScale();
+            this.rescaleAll();
+          });
+          ro.observe(this.pagesArea);
+          ro.observe(this.container);
+          if (this.scaleFrame) ro.observe(this.scaleFrame);
+          this.pagesArea.addEventListener("scroll", () => this.onScroll());
+        }
+
+        /** Below the breakpoint, hold a fixed 0.9 scale and set the
+            doc-app's pre-scale width/height to containerSize / 0.9 so the
+            visual fills the container exactly. The internal layout stays
+            responsive at all sizes. */
+        updateScale() {
+          if (!this.scaleFrame) return;
+          const w = this.scaleFrame.clientWidth;
+          const h = this.scaleFrame.clientHeight;
+          if (w <= this.SCALED_BREAKPOINT) {
+            this.container.style.width = (w / this.SCALED_FACTOR) + "px";
+            this.container.style.height = (h / this.SCALED_FACTOR) + "px";
+          } else {
+            this.container.style.width = "";
+            this.container.style.height = "";
+          }
+        }
+
+        bindOutlineToggle() {
+          if (!this.outlineToggle) return;
+          this.outlineToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.outlinePanel.classList.toggle("collapsed");
+          });
+        }
+
+        renderPages() {
+          this.pagesArea.innerHTML = "";
+          this.pageFrames = [];
+          this.pages.forEach((page, i) => {
+            const frame = document.createElement("div");
+            frame.className = "doc-page-frame";
+            frame.dataset.index = String(i);
+            const clone = page.cloneNode(true);
+
+            // Auto page number injection
+            if (clone.dataset.pageNumber === "true") {
+              const num = document.createElement("div");
+              num.className = "doc-page-number";
+              num.textContent = String(i + 1);
+              clone.appendChild(num);
+            }
+            frame.appendChild(clone);
+            this.pagesArea.appendChild(frame);
+            this.pageFrames.push(frame);
+            this.scalePage(frame);
+          });
+        }
+
+        scalePage(frame) {
+          const page = frame.querySelector(".doc-page");
+          if (!page) return;
+          const width = frame.getBoundingClientRect().width;
+          if (width > 0) {
+            page.style.transform = `scale(${width / DESIGN_WIDTH})`;
+          }
+        }
+
+        rescaleAll() {
+          this.pageFrames.forEach((f) => this.scalePage(f));
+        }
+
+        /** Auto-build the Navigation pane from h1/h2/h3 across all pages.
+            Each outline item maps to exactly one heading — clicks and
+            active-tracking operate at heading granularity, not page. */
+        renderOutline() {
+          if (!this.outlinePanel) return;
+          this.outlinePanel.querySelectorAll(".doc-outline-item").forEach((el) => el.remove());
+          this.outlineItems = [];
+          this.headings = [];
+
+          let headingCount = 0;
+          this.pageFrames.forEach((frame, pageIdx) => {
+            const page = frame.querySelector(".doc-page");
+            if (!page) return;
+            const headings = page.querySelectorAll("h1, h2, h3");
+            headings.forEach((h) => {
+              const level = parseInt(h.tagName.substring(1), 10);
+              const id = `doc-h-${headingCount++}`;
+              h.id = id;
+              const headingIdx = this.headings.length;
+              this.headings.push({ el: h, pageIdx });
+
+              const item = document.createElement("div");
+              item.className = "doc-outline-item";
+              item.dataset.level = String(level);
+              item.dataset.headingIdx = String(headingIdx);
+              item.textContent = h.textContent;
+              item.title = h.textContent;
+              item.addEventListener("click", () => this.scrollToHeading(headingIdx));
+              this.outlinePanel.appendChild(item);
+              this.outlineItems.push(item);
+            });
+          });
+
+          if (this.outlineItems.length === 0) {
+            this.outlinePanel.style.display = "none";
+          } else {
+            this.setActiveHeading(0);
+          }
+        }
+
+        scrollToHeading(index) {
+          const h = this.headings[index];
+          if (!h) return;
+          // Use scrollIntoView on the heading — its bounding rect accounts
+          // for the page's CSS transform scale, so it lands correctly.
+          h.el.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Optimistically mark active; onScroll will reconcile when the
+          // smooth scroll settles.
+          this.setActiveHeading(index);
+        }
+
+        onScroll() {
+          // --- Track current page for the bottom-bar counter ---
+          const areaRect = this.pagesArea.getBoundingClientRect();
+          const areaCenter = areaRect.top + areaRect.height / 2;
+          let closestPage = 0;
+          let closestPageDist = Infinity;
+          this.pageFrames.forEach((frame, i) => {
+            const r = frame.getBoundingClientRect();
+            const frameCenter = r.top + r.height / 2;
+            const dist = Math.abs(frameCenter - areaCenter);
+            if (dist < closestPageDist) { closestPageDist = dist; closestPage = i; }
+          });
+          if (closestPage !== this.currentPage) {
+            this.currentPage = closestPage;
+            this.updatePageCounter();
+          }
+
+          // --- Track active heading individually ---
+          // The active heading is the last one whose top has crossed a
+          // threshold just below the top of the pages area. This means
+          // selecting an h3 highlights only that h3 — never its siblings.
+          if (this.headings.length === 0) return;
+          const threshold = areaRect.top + 80;
+          let activeIdx = 0;
+          for (let i = 0; i < this.headings.length; i++) {
+            const top = this.headings[i].el.getBoundingClientRect().top;
+            if (top <= threshold) {
+              activeIdx = i;
+            } else {
+              break;
+            }
+          }
+          if (activeIdx !== this.activeHeadingIdx) {
+            this.setActiveHeading(activeIdx);
+          }
+        }
+
+        setActiveHeading(index) {
+          this.activeHeadingIdx = index;
+          this.outlineItems.forEach((item, i) => {
+            item.classList.toggle("active", i === index);
+          });
+          const active = this.outlineItems[index];
+          if (active) {
+            // Keep the active item visible in the nav panel without
+            // hijacking the main document scroll.
+            const panelRect = this.outlinePanel.getBoundingClientRect();
+            const itemRect = active.getBoundingClientRect();
+            if (itemRect.top < panelRect.top || itemRect.bottom > panelRect.bottom) {
+              active.scrollIntoView({ block: "nearest" });
+            }
+          }
+        }
+
+        updatePageCounter() {
+          if (this.pageCounter) {
+            this.pageCounter.textContent = `Page ${this.currentPage + 1} of ${this.pageFrames.length}`;
+          }
+        }
+
+        updateWordCount() {
+          if (!this.wordCount) return;
+          let count = 0;
+          this.pageFrames.forEach((frame) => {
+            const text = frame.innerText || "";
+            const words = text.trim().match(/\S+/g);
+            if (words) count += words.length;
+          });
+          this.wordCount.textContent = `${count.toLocaleString()} words`;
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const firstTitle = document
+          .querySelector("#doc-pages")
+          ?.content?.querySelector(".doc-page")
+          ?.dataset?.title;
+        new WordViewer("#doc-viewer", {
+          title: firstTitle || "Document",
+          pagesTemplate: "#doc-pages",
+        });
+      });
+    </script>
+    </div>
+  </body>
+</html>

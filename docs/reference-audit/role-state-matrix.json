@@ -1,0 +1,478 @@
+[
+  {
+    "role": "Everyone",
+    "slug": "everyone",
+    "taskLabel": "Hand off a task of any size.",
+    "cards": [
+      {
+        "slug": "action-tracking",
+        "time": "8:00 AM",
+        "headline": "Keep up with meetings all day",
+        "apps": [
+          "calendar",
+          "slack",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/hatch.svg",
+        "swatch": "peach",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/action-tracking-slack.html",
+          "frame": {
+            "width": 1200,
+            "height": 750
+          },
+          "title": "Running action-item list posted in #product-team, kept by Claude"
+        }
+      },
+      {
+        "slug": "feedback-digest",
+        "time": "12:00 PM",
+        "headline": "Organize customer feedback into a digest",
+        "apps": [
+          "slack",
+          "gmail",
+          "word",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/topo.svg",
+        "swatch": "heather",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/feedback-digest.html",
+          "frame": {
+            "width": 1200,
+            "height": 750
+          },
+          "title": "Weekly customer feedback digest with roadmap ties, built by Claude"
+        }
+      },
+      {
+        "slug": "h2-reforecast",
+        "time": "4:00 PM",
+        "headline": "Update your H2 budget for your leadership check-in",
+        "apps": [
+          "drive",
+          "excel",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/swoop.svg",
+        "swatch": "cactus",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/h2-reforecast.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "H2 budget reforecast with every changed cell flagged and the one line that didn’t tie out, built by Claude"
+        }
+      }
+    ]
+  },
+  {
+    "role": "Marketing",
+    "slug": "marketing",
+    "taskLabel": "Share an idea, get a draft back.",
+    "cards": [
+      {
+        "slug": "campaign-readout",
+        "time": "8:00 AM",
+        "headline": "See what moved and why before your day starts",
+        "apps": [
+          "amplitude",
+          "bigquery",
+          "powerpoint",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/grain.svg",
+        "swatch": "cactus",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/campaign-readout-deck.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Weekly campaign readout deck for Aug 17–23, built by Claude"
+        }
+      },
+      {
+        "slug": "asset-creation",
+        "time": "11:00 AM",
+        "headline": "Build on-brand assets to show the team",
+        "apps": [
+          "drive",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/hatch.svg",
+        "swatch": "heather",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/asset-creation.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Fall Readout proof sheet, built by Claude"
+        }
+      },
+      {
+        "slug": "audience-intelligence",
+        "time": "2:00 PM",
+        "headline": "What your audience is saying before the next meeting",
+        "apps": [
+          "gmail",
+          "slack",
+          "word",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/loop.svg",
+        "swatch": "peach",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/audience-intelligence.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Audience themes memo for the last 30 days, built by Claude"
+        }
+      }
+    ]
+  },
+  {
+    "role": "Sales",
+    "slug": "sales",
+    "taskLabel": "More time with customers.",
+    "cards": [
+      {
+        "slug": "call-prep",
+        "time": "8:00 AM",
+        "headline": "Prep for every call before your meeting",
+        "apps": [
+          "salesforce",
+          "slack",
+          "word",
+          "calendar",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/flow.svg",
+        "swatch": "peach",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/call-prep-doc.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Call prep — Wed, Aug 19"
+        }
+      },
+      {
+        "slug": "qbr-deck",
+        "time": "10:00 AM",
+        "headline": "Assemble your QBR for review",
+        "apps": [
+          "salesforce",
+          "excel",
+          "powerpoint",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/swoop.svg",
+        "swatch": "heather",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/qbr-deck.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Northfield Q2 business review deck, built by Claude"
+        }
+      },
+      {
+        "slug": "crm-hygiene",
+        "time": "4:15 PM",
+        "headline": "Keep opportunities up to date before you sign off",
+        "apps": [
+          "gong",
+          "word",
+          "salesforce",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/loop.svg",
+        "swatch": "cactus",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/crm-hygiene.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Salesforce opportunity review for Aug 12–18, built by Claude"
+        }
+      }
+    ]
+  },
+  {
+    "role": "Finance",
+    "slug": "finance",
+    "taskLabel": "Review more, reconcile less.",
+    "cards": [
+      {
+        "slug": "earnings-comps",
+        "time": "8:00 AM",
+        "headline": "Build a comps table ahead of a meeting in minutes",
+        "apps": [
+          "drive",
+          "excel",
+          "powerpoint",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/flow.svg",
+        "swatch": "cactus",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/earnings-comps-deck.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Dunhollow Q3 FY26 earnings comps deck, built by Claude"
+        }
+      },
+      {
+        "slug": "month-end-close",
+        "time": "11:00 AM",
+        "headline": "Reconcile every region in one summary before lunch",
+        "apps": [
+          "excel",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/line.svg",
+        "swatch": "peach",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/month-end-close.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "July 2026 month-end close workbook, built by Claude"
+        }
+      },
+      {
+        "slug": "h2-reforecast",
+        "time": "12:00 PM",
+        "headline": "Update your H2 budget for your leadership check-in",
+        "apps": [
+          "drive",
+          "excel",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/swoop.svg",
+        "swatch": "heather",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/h2-reforecast.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "H2 budget reforecast with every changed cell flagged and the one line that didn’t tie out, built by Claude"
+        }
+      }
+    ]
+  },
+  {
+    "role": "Human resources",
+    "slug": "hr",
+    "taskLabel": "Focus on people, not ops.",
+    "cards": [
+      {
+        "slug": "jd-check",
+        "time": "8:00 AM",
+        "headline": "Catch an issue before you post a job description",
+        "apps": [
+          "drive",
+          "word",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/swoop.svg",
+        "swatch": "heather",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/jd-check.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Senior Program Manager JD, redlined by Claude"
+        }
+      },
+      {
+        "slug": "survey-readout",
+        "time": "10:00 AM",
+        "headline": "Cluster comments into themes before the meeting",
+        "apps": [
+          "drive",
+          "powerpoint",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/hatch.svg",
+        "swatch": "cactus",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/survey-readout.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Engagement survey exec readout, built by Claude"
+        }
+      },
+      {
+        "slug": "merit-analysis",
+        "time": "2:00 PM",
+        "headline": "Do merit math and draft comp letters before you go",
+        "apps": [
+          "excel",
+          "word",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/line.svg",
+        "swatch": "peach",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/merit-analysis.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "2026 merit cycle analysis and comp letters, built by Claude"
+        }
+      }
+    ]
+  },
+  {
+    "role": "Legal",
+    "slug": "legal",
+    "taskLabel": "Claude drafts, you decide.",
+    "cards": [
+      {
+        "slug": "legal-research",
+        "time": "9:00 AM",
+        "headline": "Draft legal research and memos to prep the day",
+        "apps": [
+          "courtlistener",
+          "word",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/topo.svg",
+        "swatch": "cactus",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/legal-research.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Corvex matter research memo with every citation verified, built by Claude"
+        }
+      },
+      {
+        "slug": "deposition-prep",
+        "time": "1:00 PM",
+        "headline": "Prepare for depositions and witness interviews",
+        "apps": [
+          "everlaw",
+          "excel",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/hatch.svg",
+        "swatch": "heather",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/deposition-prep.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Deposition prep workbook for the Calder witness, built by Claude"
+        }
+      },
+      {
+        "slug": "contract-redline",
+        "time": "3:00 PM",
+        "headline": "Redline NDAs or SOWs before the end of the day",
+        "apps": [
+          "drive",
+          "word",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/line.svg",
+        "swatch": "peach",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/contract-redline.html",
+          "frame": {
+            "width": 608,
+            "height": 413
+          },
+          "title": "Northfield SOW v2 with tracked changes and comments, built by Claude"
+        }
+      }
+    ]
+  },
+  {
+    "role": "Product",
+    "slug": "product",
+    "taskLabel": "Less digging, more decisions.",
+    "cards": [
+      {
+        "slug": "action-tracking",
+        "time": "9:30 AM",
+        "headline": "Keep up with meetings all day",
+        "apps": [
+          "calendar",
+          "slack",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/hatch.svg",
+        "swatch": "cactus",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/action-tracking-slack.html",
+          "frame": {
+            "width": 1200,
+            "height": 750
+          },
+          "title": "Running action-item list posted in #product-team, kept by Claude"
+        }
+      },
+      {
+        "slug": "feedback-digest",
+        "time": "12:00 PM",
+        "headline": "Organize customer feedback into a digest",
+        "apps": [
+          "slack",
+          "gmail",
+          "word",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/topo.svg",
+        "swatch": "heather",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/feedback-digest.html",
+          "frame": {
+            "width": 1200,
+            "height": 750
+          },
+          "title": "Weekly customer feedback digest with roadmap ties, built by Claude"
+        }
+      },
+      {
+        "slug": "metrics-dashboard",
+        "time": "4:00 PM",
+        "headline": "Understand your product data before you sign off",
+        "apps": [
+          "bigquery",
+          "sheets",
+          "claude"
+        ],
+        "texture": "/static/product-overview/textures/flow.svg",
+        "swatch": "peach",
+        "artifact": {
+          "url": "https://assets.claude.ai/brand/artifacts/product/overview/metrics-dashboard.html",
+          "frame": {
+            "width": 1200,
+            "height": 750
+          },
+          "title": "Product metrics dashboard for Aug 24–30, built by Claude"
+        }
+      }
+    ]
+  }
+]

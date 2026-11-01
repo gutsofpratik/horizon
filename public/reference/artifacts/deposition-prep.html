@@ -1,0 +1,1672 @@
+<!doctype html>
+<!--
+  Chrome copied verbatim from merit-analysis.html (the governed Excel
+  chrome in site/scripts/artifacts/, read-only) — only the sheet JSON,
+  tab names, and titles differ. Content: deposition-prep, Legal scenario.
+  All names, companies, and Everlaw IDs are fictional.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deposition prep — Calder witness</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-family:
+          "Segoe UI",
+          -apple-system,
+          BlinkMacSystemFont,
+          Roboto,
+          sans-serif;
+        line-height: 1.5;
+        /* Default: clip overflow. The frame below switches to scroll
+           when the scaled-mode container query kicks in. */
+        overflow: hidden;
+      }
+
+      /* ----- Scale frame -----
+         Acts as the scroll container when the artifact renders at a fixed
+         natural size and is scaled down. A container query lets the scaled
+         mode kick in based on the parent's width, not the viewport. */
+      .xl-scale-frame {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        container-type: inline-size;
+      }
+
+      /* ----- Excel chrome (matching PPT viewer style) ----- */
+      .xl-app {
+        background: #f3f2f1;
+        overflow: hidden;
+        border-radius: 8px;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        /* Pinned to desktop size — cells, text, and chrome stay
+           constant until the scaled-mode container query takes over. */
+        font-size: 14px;
+        transform-origin: top left;
+      }
+
+      /* ----- Scaled mode: <= 400px container width -----
+         Pin a natural design footprint, scale it 80%, and let the frame
+         scroll for anything that doesn't fit. */
+      @container (max-width: 400px) {
+        .xl-scale-frame {
+          overflow: hidden;
+        }
+        .xl-app {
+          /* width + height set by JS so visual fills the container at
+             a fixed 0.9 scale; chrome layout adapts to the available
+             width the same way it does above the breakpoint. */
+          transform: scale(0.9);
+        }
+      }
+      .xl-titlebar {
+        display: flex;
+        align-items: center;
+        padding: 0.7em 1em;
+        background: #217346;
+        gap: 0.8em;
+      }
+      .xl-titlebar-icon {
+        width: 1.4em;
+        height: 1.4em;
+        background: white;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8em;
+        color: #217346;
+      }
+      .xl-titlebar-text {
+        flex: 1;
+        color: white;
+        font-size: 0.9em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* ----- Formula bar ----- */
+      .xl-formula-bar {
+        display: flex;
+        align-items: stretch;
+        background: #fff;
+        border-bottom: 1px solid #d2d0ce;
+        flex-shrink: 0;
+      }
+      .xl-namebox {
+        width: 6em;
+        display: flex;
+        align-items: center;
+        padding: 0.25em 0.6em;
+        border-right: 1px solid #e0e0e0;
+        font-size: 0.85em;
+        color: #444;
+      }
+      .xl-fx {
+        width: 2.2em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid #e0e0e0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-style: italic;
+        font-size: 0.85em;
+        color: #8a8a8a;
+      }
+      .xl-formula {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 0.25em 0.8em;
+        font-size: 0.85em;
+        color: #1f1f1f;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* ----- Grid area ----- */
+      .xl-grid-wrapper {
+        flex: 1;
+        overflow: auto;
+        position: relative;
+        background: #fff;
+        scrollbar-width: thin;
+        scrollbar-color: #c0c0c0 transparent;
+      }
+      .xl-grid-wrapper::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+      .xl-grid-wrapper::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .xl-grid-wrapper::-webkit-scrollbar-thumb {
+        background: #c0c0c0;
+        border-radius: 2px;
+      }
+
+      .xl-table {
+        /* Cells set Calibri — Excel's default grid font; the window
+           chrome stays on the system UI stack (ticket 87). */
+        font-family: Calibri, "Segoe UI", -apple-system, sans-serif;
+        /* `separate` so each cell owns its own borders. Combined with
+           putting borders on the right + bottom of each cell, the sticky
+           row-header carries its right edge with it on horizontal scroll
+           — collapse mode would share that edge with the next column,
+           which then disappears under the sticky cell. */
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+        /* Stretch to fill wrapper so remainder space is absorbed by
+           rows instead of leaving empty white at the bottom. The JS
+           picks the row count so stretch stays under one row's worth. */
+        min-height: 100%;
+      }
+
+      /* ----- Column headers ----- */
+      .xl-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+      }
+      .xl-table thead th {
+        background: #f8f8f8;
+        /* Right + bottom only; top border lives on the table edge,
+           left border is added by the corner / first column below. */
+        border-right: 1px solid #e0e0e0;
+        border-bottom: 1px solid #e0e0e0;
+        border-top: 1px solid #e0e0e0;
+        padding: 0.3em 0.6em;
+        font-weight: 500;
+        font-size: 0.85em;
+        color: #555;
+        text-align: center;
+        position: relative;
+        user-select: none;
+        white-space: nowrap;
+      }
+      /* Corner cell (top-left) */
+      .xl-table thead th.xl-corner {
+        position: sticky;
+        left: 0;
+        z-index: 4;
+        background: #f0f0f0;
+        border-left: 1px solid #e0e0e0;
+        width: var(--xl-row-header-w);
+        min-width: var(--xl-row-header-w);
+        max-width: var(--xl-row-header-w);
+      }
+
+      /* ----- Row headers ----- */
+      .xl-table tbody td.xl-row-header {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background: #f8f8f8;
+        /* Left edge of the table + right edge owned by this cell.
+           The right edge stays painted under horizontal scroll because
+           the row-header is sticky and carries its own border. */
+        border-left: 1px solid #e0e0e0;
+        border-right: 1px solid #e0e0e0;
+        border-bottom: 1px solid #e0e0e0;
+        text-align: center;
+        font-size: 0.85em;
+        color: #555;
+        font-weight: 500;
+        padding: 0.3em 0.4em;
+        user-select: none;
+        width: var(--xl-row-header-w);
+        min-width: var(--xl-row-header-w);
+        max-width: var(--xl-row-header-w);
+      }
+
+      /* ----- Data cells ----- */
+      .xl-table tbody td:not(.xl-row-header) {
+        /* Right + bottom only — neighbor's right border serves as this
+           cell's left edge, and there's no shared/collapsed border that
+           could vanish behind the sticky row-header. */
+        border-right: 1px solid #e8e8e8;
+        border-bottom: 1px solid #e8e8e8;
+        padding: 0.3em 0.6em;
+        font-size: 0.9em;
+        color: #1f1f1f;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Cell formatting classes */
+      .xl-bold {
+        font-weight: 700;
+      }
+      .xl-italic {
+        font-style: italic;
+      }
+      .xl-right {
+        text-align: right;
+      }
+      .xl-center {
+        text-align: center;
+      }
+      .xl-header-cell {
+        background: #f0f7f0;
+        font-weight: 600;
+        color: #217346;
+      }
+
+      /* Selected cell (click-to-inspect; formula bar shows its f/value) */
+      .xl-table tbody td.xl-selected {
+        outline: 2px solid #217346;
+        outline-offset: -2px;
+      }
+
+      /* ----- Sheet tabs bar (same height as titlebar) ----- */
+      .xl-tabs-bar {
+        display: flex;
+        align-items: stretch;
+        background: #f3f2f1;
+        border-top: 1px solid #d2d0ce;
+        padding: 0;
+        min-height: 2.4em;
+        gap: 0;
+        overflow: hidden;
+      }
+
+      .xl-tab-nav-group {
+        display: flex;
+        align-items: stretch;
+        width: 4.5em;
+        min-width: 4.5em;
+        flex-shrink: 0;
+        border-right: 1px solid #d2d0ce;
+      }
+      .xl-tab-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        border: none;
+        background: transparent;
+        color: #605e5c;
+        cursor: pointer;
+        font-size: 0.75em;
+        transition: background 0.1s;
+      }
+      .xl-tab-nav:hover {
+        background: #e8e8e8;
+      }
+      .xl-tab-nav:disabled {
+        opacity: 0.3;
+        cursor: default;
+        background: transparent;
+      }
+      .xl-tab-nav svg {
+        width: 1.2em;
+        height: 1.2em;
+      }
+
+      .xl-tabs-scroll {
+        display: flex;
+        align-items: stretch;
+        flex: 1;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .xl-tabs-scroll::-webkit-scrollbar {
+        display: none;
+      }
+
+      .xl-tab {
+        padding: 0 1.2em;
+        font-size: 0.8em;
+        color: #555;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        border-right: 1px solid #d2d0ce;
+        white-space: nowrap;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        transition:
+          background 0.1s,
+          color 0.1s;
+        flex-shrink: 0;
+      }
+      .xl-tab:hover {
+        background: #e8e8e8;
+      }
+      .xl-tab.active {
+        background: #fff;
+        color: #217346;
+        font-weight: 600;
+        box-shadow: inset 0 -2px 0 #217346;
+      }
+    
+
+      /* ----- Card zoom (Skylar 2026-09-03: "content of excel sheet
+         too small to read", extended to every facsimile family) -----
+         Card surfaces pin this document to its authoring box and
+         transform-scale the whole iframe into a far smaller window — the
+         library rails at ~0.44, the modal artifact well at 0.6, the card
+         face at 0.61 — so this chrome's em-derived text was landing at
+         4-6px. Authoring the document zoomed puts the surface's shrink on
+         legible type instead. Here the grid is fixed-px, so the column widths take the same factor below.
+         Gated on the LAYOUT width so the roles band's ~608px artifact
+         mount and the phone embed page stay 1x. */
+      @media (min-width: 1000px) {
+        .xl-app {
+          font-size: calc(14px * 1.6);
+        }
+      }
+</style>
+  </head>
+  <body>
+    <div class="xl-scale-frame">
+      <div class="xl-app" id="xl-viewer">
+        <div class="xl-titlebar">
+          <div class="xl-titlebar-icon">X</div>
+          <span class="xl-titlebar-text">Workbook.xlsx - Excel</span>
+        </div>
+        <div class="xl-formula-bar">
+          <div class="xl-namebox">A1</div>
+          <div class="xl-fx">fx</div>
+          <div class="xl-formula"></div>
+        </div>
+        <div class="xl-grid-wrapper">
+          <table class="xl-table"></table>
+        </div>
+        <div class="xl-tabs-bar">
+          <div class="xl-tab-nav-group">
+            <button
+              class="xl-tab-nav"
+              data-dir="prev"
+              aria-label="Previous tab"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <button class="xl-tab-nav" data-dir="next" aria-label="Next tab">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+          <div class="xl-tabs-scroll"></div>
+        </div>
+      </div>
+
+      <!--
+      Deposition prep — Legal scenario. Copy doc ask: "Pull every document
+      tagged to the witness in Everlaw, build a chronology of key events,
+      and put deposition questions in a spreadsheet, organized by topic,
+      one row per question, with the supporting document cited and a column
+      to mark each one covered." Everything is fictional: counterparty
+      Corvex Industries, witness M. Calder (Operations Director, Corvex
+      Industries), and every Everlaw ID (EVR-00xxx) is invented. 19
+      questions across 5 topics on the front tab; the first two are checked
+      to show the Covered column in use (the count cell carries the COUNTIF
+      — click it). The Chronology tab holds the 12-event timeline the
+      questions are keyed to; doc IDs reconcile across the two tabs
+      (EVR-00147 / 00168 / 00171 / 00231 / 00233 / 00240 / 00252 / 00257 /
+      00280 / 00291 appear in both).
+    -->
+      <script type="application/json" data-sheet="Questions by topic">
+        {
+          "columns": [
+            {
+              "label": "Topic",
+              "width": 130
+            },
+            {
+              "label": "#",
+              "width": 42
+            },
+            {
+              "label": "Question",
+              "width": 430
+            },
+            {
+              "label": "Supporting doc",
+              "width": 250
+            },
+            {
+              "label": "Covered",
+              "width": 76
+            }
+          ],
+          "rows": [
+            [
+              {
+                "v": "Deposition prep — M. Calder, Operations Director, Corvex Industries",
+                "cls": "xl-bold",
+                "style": "font-size:1.15em",
+                "colspan": 5
+              }
+            ],
+            [
+              {
+                "v": "Source: Everlaw — every document tagged to witness “Calder, M.” · 187 documents reviewed · 19 questions across 5 topics, one row per question · check off column E as each is covered · key events on the Chronology tab",
+                "cls": "xl-italic",
+                "style": "color:#8a8a8a; white-space:normal; line-height:1.4",
+                "colspan": 5
+              }
+            ],
+            [],
+            [
+              {
+                "v": "Topic",
+                "cls": "xl-header-cell"
+              },
+              {
+                "v": "#",
+                "cls": "xl-header-cell xl-center"
+              },
+              {
+                "v": "Question",
+                "cls": "xl-header-cell"
+              },
+              {
+                "v": "Supporting doc",
+                "cls": "xl-header-cell"
+              },
+              {
+                "v": "Covered",
+                "cls": "xl-header-cell xl-center"
+              }
+            ],
+            [
+              {
+                "v": "Background & role",
+                "cls": "xl-bold",
+                "style": "background:#f0f7f0; color:#217346",
+                "colspan": 5
+              }
+            ],
+            [
+              "",
+              {
+                "v": "1",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Walk me through your role as Operations Director — what sits under you at Corvex, and who do you report to?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00108 · Corvex operations org chart",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☑",
+                "cls": "xl-center",
+                "style": "color:#217346"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "2",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Who at Corvex owned the supplier relationship under the services agreement day to day?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00114 · Vendor governance memo",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☑",
+                "cls": "xl-center",
+                "style": "color:#217346"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "3",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "What reports did you personally review each month on delivery performance?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00131 · Monthly ops dashboard, Jan 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "4",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Exhibit EVR-00147 is your January ops review — what did “slippage trending red” mean on your dashboard?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00147 · Ops review memo, Jan 15, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              {
+                "v": "Timeline of the amendment",
+                "cls": "xl-bold",
+                "style": "background:#f0f7f0; color:#217346",
+                "colspan": 5
+              }
+            ],
+            [
+              "",
+              {
+                "v": "5",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "When did you first see a draft of Amendment 2?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00168 · Amendment 2 draft redline",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "6",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Who proposed cutting the inspection window from 30 days to 10?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00168 · Amendment 2 draft redline",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "7",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Exhibit EVR-00171 is your February 21 email — what analysis sat behind “operationally we can live with this”?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00171 · Email, Feb 21, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "8",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Who approved Amendment 2 on the Corvex side before signature, besides you?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00174 · Signature routing slip",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              {
+                "v": "The March correspondence",
+                "cls": "xl-bold",
+                "style": "background:#f0f7f0; color:#217346",
+                "colspan": 5
+              }
+            ],
+            [
+              "",
+              {
+                "v": "9",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Exhibit EVR-00231 is an email you sent on March 12 — what prompted it?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00231 · Email, Mar 12, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "10",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "When you wrote “we can’t hold the March schedule,” which shipments were you referring to?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00231 · Email, Mar 12, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "11",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Your VP replied two days later directing shipments to continue — did you agree with that direction?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00233 · Email, Mar 14, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "12",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Between March 14 and the first rejected lot, what did operations change, if anything?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00240 · QC log, Mar 28, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              {
+                "v": "Site inspection",
+                "cls": "xl-bold",
+                "style": "background:#f0f7f0; color:#217346",
+                "colspan": 5
+              }
+            ],
+            [
+              "",
+              {
+                "v": "13",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Who selected April 9 as the inspection date for Plant 2?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00249 · Inspection scheduling email",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "14",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Walk me through the inspection — where did you take the team, and what was off-limits?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00252 · Site inspection report, Apr 9, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "15",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "The findings memo cites calibration records missing for line 3 — when did you first learn that?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00257 · Inspection findings memo",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "16",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "What corrective actions did Corvex open after the inspection, and who owned them?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00263 · CAPA tracker export",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              {
+                "v": "Damages",
+                "cls": "xl-bold",
+                "style": "background:#f0f7f0; color:#217346",
+                "colspan": 5
+              }
+            ],
+            [
+              "",
+              {
+                "v": "17",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Exhibit EVR-00280 is the May 30 suspension notice — who drafted it, and what did you contribute?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00280 · Suspension notice, May 30, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "18",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "The damages spreadsheet claims $2.4M in cover costs — which line items did operations supply?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00291 · Damages spreadsheet, Jul 8, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [
+              "",
+              {
+                "v": "19",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              },
+              {
+                "v": "Were any of the replacement-supplier costs in that spreadsheet committed before deliveries were suspended?",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00291 · Damages spreadsheet, Jul 8, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "☐",
+                "cls": "xl-center",
+                "style": "color:#8a8a8a"
+              }
+            ],
+            [],
+            [
+              {
+                "v": "Covered",
+                "cls": "xl-bold"
+              },
+              {
+                "v": "2 of 19",
+                "cls": "xl-bold xl-center",
+                "f": "=COUNTIF(E6:E28,\"☑\")&\" of 19\"",
+                "colspan": 2
+              }
+            ],
+            [],
+            [
+              {
+                "v": "Suggested order — background first, damages last · every question cites its Everlaw document in column D · doc IDs cross-reference the Chronology tab",
+                "cls": "xl-italic",
+                "style": "color:#8a8a8a; white-space:normal; line-height:1.4",
+                "colspan": 5
+              }
+            ]
+          ]
+        }
+      </script>
+
+      <script type="application/json" data-sheet="Chronology">
+        {
+          "columns": [
+            {
+              "label": "Date",
+              "width": 96
+            },
+            {
+              "label": "Event",
+              "width": 310
+            },
+            {
+              "label": "Everlaw doc",
+              "width": 240
+            },
+            {
+              "label": "Why it matters",
+              "width": 320
+            }
+          ],
+          "rows": [
+            [
+              {
+                "v": "Chronology — key events from the Calder documents",
+                "cls": "xl-bold",
+                "style": "font-size:1.15em",
+                "colspan": 4
+              }
+            ],
+            [
+              {
+                "v": "Built from the same 187-document Everlaw set · dates from document metadata, cross-checked against the QC log · amber rows are the gaps to press on · questions keyed to these events on the Questions by topic tab",
+                "cls": "xl-italic",
+                "style": "color:#8a8a8a; white-space:normal; line-height:1.4",
+                "colspan": 4
+              }
+            ],
+            [],
+            [
+              {
+                "v": "Date",
+                "cls": "xl-header-cell xl-center"
+              },
+              {
+                "v": "Event",
+                "cls": "xl-header-cell"
+              },
+              {
+                "v": "Everlaw doc",
+                "cls": "xl-header-cell"
+              },
+              {
+                "v": "Why it matters",
+                "cls": "xl-header-cell"
+              }
+            ],
+            [
+              {
+                "v": "Jun 18, 2024",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "Master services agreement signed",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00102 · Services agreement (executed)",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "Baseline delivery terms — 30-day inspection window",
+                "style": "white-space:normal; line-height:1.35"
+              }
+            ],
+            [
+              {
+                "v": "Nov 4, 2024",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "Amendment 1 — pricing schedule",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00126 · Amendment 1 (executed)",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "Pricing only; delivery and inspection terms untouched",
+                "style": "white-space:normal; line-height:1.35"
+              }
+            ],
+            [
+              {
+                "v": "Jan 15, 2025",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "Corvex ops review flags delivery slippage",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00147 · Ops review memo",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "Calder’s own dashboard showed the risk before Amendment 2",
+                "style": "white-space:normal; line-height:1.35"
+              }
+            ],
+            [
+              {
+                "v": "Feb 3, 2025",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "Amendment 2 circulated — inspection window cut to 10 days",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00168 · Amendment 2 draft redline",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "The term at the center of the dispute",
+                "style": "white-space:normal; line-height:1.35"
+              }
+            ],
+            [
+              {
+                "v": "Feb 21, 2025",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "Calder approves internally: “operationally we can live with this”",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00171 · Email, Feb 21, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "Direct admission on feasibility — quote it back",
+                "style": "white-space:normal; line-height:1.35"
+              }
+            ],
+            [
+              {
+                "v": "Mar 12, 2025",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "Calder: “we can’t hold the March schedule”",
+                "style": "background:#fdf3dd; white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00231 · Email, Mar 12, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "Contradicts the Feb 21 position 19 days later",
+                "style": "background:#fdf3dd; white-space:normal; line-height:1.35; color:#8a5a16"
+              }
+            ],
+            [
+              {
+                "v": "Mar 14, 2025",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "VP directs shipments to continue",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00233 · Email, Mar 14, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "Who overrode operations, and on what basis",
+                "style": "white-space:normal; line-height:1.35"
+              }
+            ],
+            [
+              {
+                "v": "Mar 28, 2025",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "First rejected lot logged",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00240 · QC log, Mar 28, 2025",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "Start of the rejection pattern claimed as damages",
+                "style": "white-space:normal; line-height:1.35"
+              }
+            ],
+            [
+              {
+                "v": "Apr 9, 2025",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "Site inspection, Corvex Plant 2",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00252 · Site inspection report",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "Line 3 excluded from the walk-through",
+                "style": "white-space:normal; line-height:1.35"
+              }
+            ],
+            [
+              {
+                "v": "Apr 16, 2025",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "Findings memo — calibration records missing for line 3",
+                "style": "background:#fdf3dd; white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00257 · Inspection findings memo",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "Records still not produced — press for where they are",
+                "style": "background:#fdf3dd; white-space:normal; line-height:1.35; color:#8a5a16"
+              }
+            ],
+            [
+              {
+                "v": "May 30, 2025",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "Corvex suspends deliveries",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00280 · Suspension notice",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "Timing relative to cover-cost commitments",
+                "style": "white-space:normal; line-height:1.35"
+              }
+            ],
+            [
+              {
+                "v": "Jul 8, 2025",
+                "cls": "xl-center",
+                "style": "color:#555"
+              },
+              {
+                "v": "Damages spreadsheet prepared by Corvex finance",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "EVR-00291 · Damages spreadsheet",
+                "style": "white-space:normal; line-height:1.35"
+              },
+              {
+                "v": "$2.4M cover claim — which line items operations supplied",
+                "style": "white-space:normal; line-height:1.35"
+              }
+            ],
+            [],
+            [
+              {
+                "v": "Everything above cites a produced document — no event without an EVR number. One row per question on the front tab keys back to these dates.",
+                "cls": "xl-italic",
+                "style": "color:#8a8a8a; white-space:normal; line-height:1.4",
+                "colspan": 4
+              }
+            ]
+          ]
+        }
+      </script>
+      <script>
+        /* The renderer half of the card zoom in the stylesheet above. The CSS
+           carries every em-derived size; these are the hard-px ones. The test
+           mirrors the media query exactly so the two cannot disagree. */
+        const XL_CARD_ZOOM = window.matchMedia("(min-width: 1000px)").matches
+          ? 1.6
+          : 1;
+
+        class ExcelViewer {
+          constructor(container, config = {}) {
+            this.container =
+              typeof container === "string"
+                ? document.querySelector(container)
+                : container;
+            this.table = this.container.querySelector(".xl-table");
+            this.tabsScroll = this.container.querySelector(".xl-tabs-scroll");
+            this.gridWrapper = this.container.querySelector(".xl-grid-wrapper");
+            this.titleBar = this.container.querySelector(".xl-titlebar-text");
+            this.nameBox = this.container.querySelector(".xl-namebox");
+            this.formulaBar = this.container.querySelector(".xl-formula");
+            this.selected = null; // { r, c } of the inspected cell
+            this.prevTabBtn = this.container.querySelector(
+              '.xl-tab-nav[data-dir="prev"]',
+            );
+            this.nextTabBtn = this.container.querySelector(
+              '.xl-tab-nav[data-dir="next"]',
+            );
+            this.title = config.title || "Workbook";
+            this.sheets = this.loadSheets();
+            this.activeSheet = null;
+            this.activeIndex = 0;
+            this.colWidths = {};
+            this.scaleFrame = this.container.parentElement; // .xl-scale-frame
+            this.SCALED_BREAKPOINT = 400;
+            this.SCALED_FACTOR = 0.9;
+            // Row header width matches the tab-nav-group, snapped to whole px
+            const navGroup = this.container.querySelector(".xl-tab-nav-group");
+            this.ROW_HEADER_W = navGroup
+              ? navGroup.offsetWidth
+              : Math.round(
+                  parseFloat(getComputedStyle(this.container).fontSize) * 3.5,
+                );
+            // Set CSS variable so th/td lock to exact same width
+            this.container.style.setProperty(
+              "--xl-row-header-w",
+              this.ROW_HEADER_W + "px",
+            );
+            this.init();
+          }
+
+          /** Below the breakpoint, hold a fixed 0.9 scale and set the
+            xl-app's pre-scale width/height to containerSize / 0.9 so the
+            visual fills the container exactly. The internal layout stays
+            responsive at all sizes. */
+          updateScale() {
+            if (!this.scaleFrame) return;
+            const w = this.scaleFrame.clientWidth;
+            const h = this.scaleFrame.clientHeight;
+            if (w <= this.SCALED_BREAKPOINT) {
+              this.container.style.width = w / this.SCALED_FACTOR + "px";
+              this.container.style.height = h / this.SCALED_FACTOR + "px";
+            } else {
+              this.container.style.width = "";
+              this.container.style.height = "";
+            }
+          }
+
+          loadSheets() {
+            const sheets = [];
+            document.querySelectorAll("script[data-sheet]").forEach((el) => {
+              try {
+                const data = JSON.parse(el.textContent);
+                sheets.push({ name: el.dataset.sheet, ...data });
+              } catch (e) {
+                console.warn(
+                  `[ExcelViewer] Failed to parse sheet "${el.dataset.sheet}":`,
+                  e,
+                );
+              }
+            });
+            return sheets;
+          }
+
+          init() {
+            if (this.titleBar)
+              this.titleBar.textContent = `${this.title}.xlsx - Excel`;
+            document.title = this.title;
+            this.renderTabs();
+            if (this.sheets.length > 0) this.switchSheet(0);
+            this.bindTabNav();
+            this.bindCellSelect();
+            this.updateScale();
+            // Re-render once after layout settles for filler column calculation
+            requestAnimationFrame(() => {
+              if (this.activeSheet) this.renderGrid(this.activeSheet);
+            });
+            // Re-render on resize so filler row/column counts track the
+            // available space — prevents overscroll on small viewports.
+            new ResizeObserver(() => {
+              if (this.activeSheet) this.renderGrid(this.activeSheet);
+            }).observe(this.gridWrapper);
+            // Update scale when the scale frame resizes.
+            if (this.scaleFrame) {
+              new ResizeObserver(() => {
+                this.updateScale();
+                if (this.activeSheet) this.renderGrid(this.activeSheet);
+              }).observe(this.scaleFrame);
+            }
+          }
+
+          colLetter(i) {
+            let s = "";
+            let n = i;
+            while (n >= 0) {
+              s = String.fromCharCode(65 + (n % 26)) + s;
+              n = Math.floor(n / 26) - 1;
+            }
+            return s;
+          }
+
+          renderTabs() {
+            this.tabsScroll.innerHTML = "";
+            this.sheets.forEach((sheet, i) => {
+              const btn = document.createElement("button");
+              btn.className = "xl-tab";
+              btn.textContent = sheet.name;
+              btn.addEventListener("click", () => this.switchSheet(i));
+              this.tabsScroll.appendChild(btn);
+            });
+          }
+
+          switchSheet(index) {
+            if (index < 0 || index >= this.sheets.length) return;
+            this.activeIndex = index;
+            const sheet = this.sheets[index];
+            this.activeSheet = sheet;
+            this.selected = null; // selection is per-sheet
+            if (this.nameBox) this.nameBox.textContent = "A1";
+            if (this.formulaBar) this.formulaBar.textContent = "";
+
+            if (!this.colWidths[sheet.name]) {
+              this.colWidths[sheet.name] = sheet.columns.map(
+                (c) => (c.width || 100) * XL_CARD_ZOOM,
+              );
+            }
+
+            this.renderGrid(sheet);
+
+            this.tabsScroll.querySelectorAll(".xl-tab").forEach((tab, i) => {
+              tab.classList.toggle("active", i === index);
+            });
+
+            // Scroll active tab into view
+            const activeTab = this.tabsScroll.children[index];
+            // Keep the active tab visible WITHIN the tab strip.
+            //
+            // Deliberately NOT scrollIntoView: that method is specified to
+            // scroll EVERY ancestor scroll container. When one of these
+            // artifacts is iframed into a page, the last ancestor it reaches is
+            // the HOST document — and because init() calls switchSheet(0), the
+            // host page scrolled itself down to the iframe on load and "opened
+            // in the middle of the page" (found on horizon.com/overview-loom,
+            // 2026-08-19).
+            //
+            // The strip only ever scrolls horizontally, so adjusting scrollLeft
+            // reproduces inline:"nearest" exactly, scoped to the strip.
+            //
+            // Measured with getBoundingClientRect, NOT offsetLeft: the strip is
+            // position:static, so the tabs' offsetParent is an ancestor of it
+            // and offsetLeft overstates the in-strip offset (measured 433 vs a
+            // true 370). Rect deltas are relative to the strip either way.
+            if (activeTab) {
+              const strip = this.tabsScroll;
+              const stripBox = strip.getBoundingClientRect();
+              const tabBox = activeTab.getBoundingClientRect();
+              const overLeft = tabBox.left - stripBox.left;
+              const overRight = tabBox.right - stripBox.right;
+              if (overLeft < 0) {
+                strip.scrollLeft += overLeft;
+              } else if (overRight > 0) {
+                strip.scrollLeft += overRight;
+              }
+            }
+
+            this.updateTabNavButtons();
+
+            this.gridWrapper.scrollTop = 0;
+            this.gridWrapper.scrollLeft = 0;
+          }
+
+          updateTabNavButtons() {
+            this.prevTabBtn.disabled = this.activeIndex === 0;
+            this.nextTabBtn.disabled =
+              this.activeIndex === this.sheets.length - 1;
+          }
+
+          bindTabNav() {
+            this.prevTabBtn.addEventListener("click", () =>
+              this.switchSheet(this.activeIndex - 1),
+            );
+            this.nextTabBtn.addEventListener("click", () =>
+              this.switchSheet(this.activeIndex + 1),
+            );
+          }
+
+          /* ----- Cell inspection (formula bar) ----- */
+          bindCellSelect() {
+            this.gridWrapper.addEventListener("click", (e) => {
+              const td = e.target.closest("td");
+              if (
+                !td ||
+                td.classList.contains("xl-row-header") ||
+                td.dataset.r == null
+              )
+                return;
+              this.selectCell(
+                parseInt(td.dataset.r, 10),
+                parseInt(td.dataset.c, 10),
+              );
+            });
+          }
+
+          cellAt(r, c) {
+            const row = this.activeSheet && this.activeSheet.rows[r];
+            return row ? row[c] : null;
+          }
+
+          /** Select a cell: green outline, address in the name box, and its
+            "f" formula (or plain value) in the formula bar. */
+          selectCell(r, c) {
+            this.selected = { r, c };
+            this.applySelection();
+          }
+
+          clearSelection() {
+            this.selected = null;
+            if (this.nameBox) this.nameBox.textContent = "A1";
+            if (this.formulaBar) this.formulaBar.textContent = "";
+            this.table
+              .querySelectorAll("td.xl-selected")
+              .forEach((el) => el.classList.remove("xl-selected"));
+          }
+
+          applySelection() {
+            this.table
+              .querySelectorAll("td.xl-selected")
+              .forEach((el) => el.classList.remove("xl-selected"));
+            if (!this.selected) return;
+            const { r, c } = this.selected;
+            const td = this.table.querySelector(
+              `td[data-r="${r}"][data-c="${c}"]`,
+            );
+            if (td) td.classList.add("xl-selected");
+            if (this.nameBox)
+              this.nameBox.textContent = this.colLetter(c) + (r + 1);
+            const cell = this.cellAt(r, c);
+            let text = "";
+            if (cell != null && cell !== "") {
+              text =
+                typeof cell === "object"
+                  ? cell.f || String(cell.v ?? "")
+                  : String(cell);
+            }
+            if (this.formulaBar) this.formulaBar.textContent = text;
+          }
+
+          renderGrid(sheet) {
+            // Re-read the tab-nav-group's live offsetWidth so the row-header
+            // column scales proportionally with the container's font size.
+            // Otherwise ROW_HEADER_W is frozen at construction-time pixels
+            // and grows visually too wide as everything else shrinks.
+            const navGroup = this.container.querySelector(".xl-tab-nav-group");
+            if (navGroup) {
+              const navW = navGroup.offsetWidth;
+              if (navW > 0 && navW !== this.ROW_HEADER_W) {
+                this.ROW_HEADER_W = navW;
+                this.container.style.setProperty(
+                  "--xl-row-header-w",
+                  navW + "px",
+                );
+              }
+            }
+
+            const widths = this.colWidths[sheet.name];
+            const numCols = sheet.columns.length;
+
+            // Calculate filler columns to fill visible width
+            const wrapperW = this.gridWrapper.clientWidth || 800;
+            const wrapperH = this.gridWrapper.clientHeight || 600;
+            const usedW = this.ROW_HEADER_W + widths.reduce((a, b) => a + b, 0);
+            const defaultColW = 80 * XL_CARD_ZOOM;
+            const extraCols =
+              usedW < wrapperW
+                ? Math.ceil((wrapperW - usedW) / defaultColW)
+                : 0;
+            const totalCols = numCols + extraCols;
+
+            const contentRows = sheet.rows.length;
+
+            // Colgroup + thead + tbody builder (rowCount rows in the body).
+            const buildHTML = (rowCount) => {
+              let out = `<colgroup><col style="width:${this.ROW_HEADER_W}px">`;
+              widths.forEach((w) => {
+                out += `<col style="width:${w}px">`;
+              });
+              for (let i = 0; i < extraCols; i++)
+                out += `<col style="width:${defaultColW}px">`;
+              out += `</colgroup>`;
+              out += "<thead><tr>";
+              out += '<th class="xl-corner"></th>';
+              for (let ci = 0; ci < totalCols; ci++)
+                out += `<th>${this.colLetter(ci)}</th>`;
+              out += "</tr></thead>";
+              out += "<tbody>";
+              for (let ri = 0; ri < rowCount; ri++) {
+                out += "<tr>";
+                out += `<td class="xl-row-header">${ri + 1}</td>`;
+                const row = sheet.rows[ri] || [];
+                for (let ci = 0; ci < totalCols; ci++) {
+                  const cell = ci < numCols ? row[ci] : null;
+                  const addr = ` data-r="${ri}" data-c="${ci}"`;
+                  if (cell == null || cell === "") {
+                    out += `<td${addr}></td>`;
+                  } else if (typeof cell === "object") {
+                    const cls = cell.cls ? ` class="${cell.cls}"` : "";
+                    const sty = cell.style ? ` style="${cell.style}"` : "";
+                    const cs =
+                      cell.colspan && cell.colspan > 1
+                        ? ` colspan="${cell.colspan}"`
+                        : "";
+                    out += `<td${addr}${cls}${sty}${cs}>${cell.v ?? ""}</td>`;
+                    if (cell.colspan && cell.colspan > 1) {
+                      ci += cell.colspan - 1;
+                    }
+                  } else {
+                    out += `<td${addr}>${cell}</td>`;
+                  }
+                }
+                out += "</tr>";
+              }
+              out += "</tbody>";
+              return out;
+            };
+
+            // Pass 1: render a probe with min-height stretch disabled so
+            // we measure natural row height (not stretched by min-height:100%).
+            this.table.style.minHeight = "0";
+            const probeCount = Math.max(contentRows, 1);
+            this.table.innerHTML = buildHTML(probeCount);
+            const firstRow = this.table.querySelector("tbody tr");
+            const headerRow = this.table.querySelector("thead tr");
+            // A zero-height measurement is the danger case, not a
+            // missing one — so `? :` on the element is not enough. While
+            // the day-card hosting this artifact is being dealt, the panel
+            // has no layout, the ResizeObserver still fires, and every
+            // measurement below reads 0. Dividing by that gives Infinity,
+            // and buildHTML() then concatenates <tr>s until V8 refuses the
+            // string: ~6.5s of frozen page ending in "RangeError: Invalid
+            // string length" (Skylar 8/31, "page freeze when I click on
+            // these roles"). Guard the DIVISOR the way wrapperW above is
+            // guarded with `|| 800`.
+            // Probe: qa-ov4-artifact-grid-collapse.mjs.
+            const measuredRowH = firstRow ? firstRow.getBoundingClientRect().height : 0;
+            const rowH = measuredRowH > 0 ? measuredRowH : 28;
+            const measuredHeaderH = headerRow ? headerRow.getBoundingClientRect().height : 0;
+            const headerH = measuredHeaderH > 0 ? measuredHeaderH : 28;
+            this.table.style.minHeight = ""; // restore CSS min-height:100%
+
+            // How many natural-height rows fit. Floor leaves up to one
+            // row's worth of remainder; that remainder is absorbed by the
+            // table's min-height:100% which stretches rows slightly to
+            // fill — never by more than one row divided across N.
+            // Cap as defense in depth: a guarded divisor fixes today's
+            // zero, the cap means no future zero-measure path can be
+            // unbounded.
+            const MAX_FILLER_ROWS = 200;
+            const visibleCapacity = Math.max(
+              1,
+              Math.min(MAX_FILLER_ROWS, Math.floor((wrapperH - headerH) / rowH)),
+            );
+
+            // Fill the viewport — content rows always render, then filler
+            // rows up to capacity. On resize down, filler rows drop off
+            // one by one, so no scrollbar appears from empty rows.
+            const rowCount = Math.max(contentRows, visibleCapacity);
+
+            // Pass 2: render final row count.
+            this.table.innerHTML = buildHTML(rowCount);
+            // Re-apply the inspected cell after any re-render (resize,
+            // filler recalculation) so the selection survives.
+            this.applySelection();
+          }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+          new ExcelViewer("#xl-viewer", {
+            title: "calder-deposition-prep",
+          });
+        });
+      </script>
+    </div>
+  </body>
+</html>

@@ -1,111 +1,91 @@
-# Horizons Lab — Official Landing Page
+# Horizons Lab
 
-> **Sovereign Intelligence. Unrestricted Creation.**  
-> The official, high-performance, black-and-white minimalist landing page for **Horizons Lab** and its flagship product **Horizon** (v0.3.3).
+A light monochrome website for an independent AI lab and its flagship desktop app, Horizon. Built with React, TypeScript, and Vite.
 
----
+## Pages
 
-## 🏛️ About Horizons Lab
+- `/`: lab overview, interactive research directions, Horizon screenshots, the open ecosystem, and desktop downloads.
+- `/research`: model training/adaptation, efficient inference, agents and tools, and the lab's experimental approach.
+- `/about`: purpose, guiding principles, and the project maintainer.
+- `/contact`: contact placeholders, public GitHub channels, and topic-based enquiry drafts. Clicking Continue on GitHub opens a draft issue; it does not post a message.
 
-**Horizons Lab** is an open-source AI research and engineering collective. We build local-first desktop operating environments, experiment with extreme low-bit post-training quantization (PTQ) and model fine-tuning, develop zero-copy systems tools, and contribute permissive tooling back to the open source community.
+Research ambitions are distinguished from published results. The site does not claim published training runs, original model weights, measured throughput, or research papers that do not exist.
 
-### The Horizon Ecosystem
-* **[Horizon](https://github.com/gutsofpratik/Horizon)**: A local-first AI workspace for creating files, editing artifacts, running shell commands, and orchestrating models directly on your hardware.
-* **[Horizon-Skills](https://github.com/gutsofpratik/Horizon-Skills)**: A public registry of **3,203+ packaged AI skills**, agent workflows, and verified developer prompts.
-* **[Horizon-Models](https://github.com/gutsofpratik/Horizon-Models)**: Empirical hardware guidance, model recommendations, and memory sizing catalogs for consumer GPUs and Apple Silicon.
+## Motion and identity
 
----
+Original SVG icons, a pointer-responsive floating sculpture, animated neural connections, an interactive research selector, scroll progress, and restrained section/hover transitions. All motion respects `prefers-reduced-motion`. No animation or rendering library is required in production.
 
-## 🎨 Aesthetics & Design Philosophy
+The hero artwork is pre-rendered with `scripts/sculpture-renderer.js`. The live page uses an ordinary PNG, not a WebGL runtime.
 
-* **Ultra-Clean Monochrome / Black & White**: Pure deep blacks (`#050505`), crisp whites (`#ffffff`), hairline borders (`rgba(255,255,255,0.1)`), and subtle dot-matrix patterns.
-* **Brutalist Yet Refined Typography**: Dual-font design pairing `Inter` (geometric readability) with `Geist Mono` (code, terminals, metrics, and parameters).
-* **Live Interactive Simulations**: Instead of static screenshots, visitors can interact with a live simulated Horizon desktop:
-  1. **Editable Artifacts Engine**: Side-by-side preview and source code views with live state reflection.
-  2. **Sandboxed Shell**: Terminal emulator with interactive preset commands (`horizon model status`, `horizon skills list`, `horizon agent swarm`) and command input.
-  3. **Local Model Engine**: Interactive VRAM and throughput inspecter for Qwen 3.5 9B, Bonsai 2 27B, and Qwen 3 Coder 30B.
-  4. **Office & PDF Studio**: Live document synthesizer preview for `.docx`, `.xlsx` (with calculated formula chains), and PDFs.
-* **Interactive Hardware Sizer**: Visitors select their RAM/VRAM (8GB, 16GB, 24GB, 32GB-64GB, 128GB+) to instantly discover their ideal local model and expected tokens/second.
-* **Searchable Skills Registry**: Real-time filtering across the 3,203+ skills catalog with 1-click install command copier.
-* **Download Center v0.3.3**: Direct release links for Windows (Setup & Portable), macOS (Apple Silicon DMG & ZIP), Linux (Ubuntu 24.04 DEB & AppImage), and Source Code snapshots with SHA-256 verification.
+## Contact configuration
 
----
+The email is intentionally unconfigured. Set `PUBLIC_CONTACT.email` in `src/data/labContent.ts` when the public inbox is ready. Until then, the Contact page clearly says the address is coming soon. No invented inbox or nonfunctional submission form is shown.
 
-## 🚀 Quick Start
+## Content sources
 
-### 1. Prerequisites
-* **Node.js** v20+ 
-* **npm** v10+
+- [Horizon](https://github.com/gutsofpratik/Horizon): application features, screenshots, and v0.3.3 release packages.
+- [Horizon Models](https://github.com/gutsofpratik/Horizon-Models): model selection and runtime guidance. Hardware estimates are not benchmarks.
+- [Horizon Skills](https://github.com/gutsofpratik/Horizon-Skills): reusable instructions, provenance, and license information.
+- [Pratik Soni](https://github.com/gutsofpratik): public maintainer profile.
 
-### 2. Development Server
-Clone or enter the directory, install dependencies, and launch Vite:
+The lab's research interests and intended direction are based on the project owner's brief.
 
-```bash
-git clone https://github.com/gutsofpratik/Horizon.git
-cd horizon
+## Development
+
+Use a Node.js version supported by Vite 8 (Node 20.19+ or 22.12+).
+
+```sh
 npm install
 npm run dev
-```
-
-Visit `http://localhost:5173` in your browser.
-
-### 3. Production Build
-Build the optimized static bundle:
-
-```bash
 npm run build
-```
-
-The production assets will be output to `./dist`. You can preview the production build locally with:
-
-```bash
+npm run lint
 npm run preview
 ```
 
----
+Production files are generated in `dist/`. Routes use normal browser navigation; configure your static host to serve `index.html` for page routes. `vercel.json` includes that rewrite for Vercel.
 
-## 📦 Project Structure
+## Main files
 
+- `src/App.tsx`: shared header/footer and homepage.
+- `src/components/LabPages.tsx`: Research, About, Contact, and not-found content.
+- `src/components/ResearchExplorer.tsx`: keyboard-accessible research tabs and animated neural field.
+- `src/components/LabIcons.tsx`: custom SVG icon set.
+- `src/components/PageMotion.tsx`: scroll progress and section reveal lifecycle.
+- `src/components/LabVisuals.tsx`: hero artwork and pointer response.
+- `src/App.css`, `src/motion.css`, and component CSS: responsive layout and motion.
+- `src/data/labContent.ts`: public contact configuration.
+
+Earlier unused components and sample datasets remain in the repository; they are not sources for current claims.
+
+## Releases
+
+The download card identifies v0.3.3 explicitly. Update the release label and asset URLs together in `src/App.tsx` for a new release. Models and provider accounts are separate from the app download.
+
+Horizon is an independent project and is not affiliated with Anthropic.
+
+## Cloudflare deployment
+
+Production: https://openhorizonlab.org
+
+The site is deployed as Cloudflare Workers static assets. `wrangler.jsonc` pins the selected Cloudflare account and enables single-page application fallback so direct visits to Research, About, and Contact work.
+
+```sh
+npm run deploy:check
+npm run deploy
 ```
-horizon/
-├── dist/                      # Production build assets
-├── src/
-│   ├── assets/                # Logos and vectors
-│   ├── components/
-│   │   ├── DownloadModal.tsx  # Quick OS download selector modal
-│   │   ├── DownloadSection.tsx# Full v0.3.3 installer & SHA-256 matrix
-│   │   ├── EcosystemTrio.tsx  # Horizon, Horizon-Skills, Horizon-Models showcase
-│   │   ├── Footer.tsx         # Comprehensive lab footer & dispatch signup
-│   │   ├── HardwareCalculator.tsx # Interactive RAM/VRAM model matcher
-│   │   ├── Hero.tsx           # Monochrome hero with clone snippet & metrics
-│   │   ├── Icons.tsx          # SVG icons (GitHub, brand marks)
-│   │   ├── InteractiveShowcase.tsx # Live simulated Horizon workspace
-│   │   ├── LabManifesto.tsx   # 4 core open-source principles
-│   │   ├── Navbar.tsx         # Sticky header with logo and navigation
-│   │   ├── ProductFeatures.tsx# 6 architectural pillars of Horizon
-│   │   ├── SkillsExplorer.tsx # Searchable 3,203+ skills registry
-│   │   └── TheLabSection.tsx  # Experimental research & crazy projects
-│   ├── data/
-│   │   └── horizonData.ts     # Release binaries, model specs, skills data
-│   ├── App.tsx                # Master page layout
-│   ├── index.css              # Tailwind v4 setup & monochrome variables
-│   └── main.tsx               # React 19 entrypoint
-├── index.html                 # Document metadata & Google Fonts
-├── vite.config.ts             # Vite + React + Tailwind CSS v4 plugin
-└── package.json
-```
 
----
+Wrangler authentication is stored outside this repository. Log in to the configured account with `npx wrangler login` before deploying. For a deliberate account change, update `account_id` in `wrangler.jsonc` after authenticating to the intended account. The custom domain openhorizonlab.org is attached to the horizons-lab Worker. The workers.dev address is disabled.
 
-## 📜 Upstream Repositories & Links
+## Local forms and private administration
 
-* **Product Repository**: [https://github.com/gutsofpratik/Horizon](https://github.com/gutsofpratik/Horizon)
-* **Skills Catalog**: [https://github.com/gutsofpratik/Horizon-Skills](https://github.com/gutsofpratik/Horizon-Skills)
-* **Models Catalog**: [https://github.com/gutsofpratik/Horizon-Models](https://github.com/gutsofpratik/Horizon-Models)
-* **Organization / Developer**: [https://github.com/gutsofpratik](https://github.com/gutsofpratik)
+The Vite preview serves `/api/waitlist` and `/api/contact` through `server/previewForms.ts`. Submissions are validated and persisted under `.horizon-data/submissions.jsonl`. This directory is ignored by Git. Duplicate waitlist email addresses do not create additional records. A honeypot and request limits reduce basic automated submissions.
 
----
+The local administration screen is `/admin`. Its access token is generated on first server start and stored in `.horizon-data/admin-token`; open that private file locally to sign in. The token is not included in frontend source or printed in application logs. Administration supports viewing the two submission types and CSV export. CSV cells beginning with formula characters are escaped.
 
-## ⚖️ License
+Production form handling is prepared in `worker/index.ts`. The Cloudflare D1 database `horizons-lab-forms` and the schema in `worker/schema.sql` have been created. The Worker configuration binds it as `DB`. Before a future production release, configure a strong `ADMIN_TOKEN` with Wrangler's secret command; without that secret the production admin endpoint denies access. Database records remain private. The website and Worker changes have not been deployed as part of this preview revision.
 
-Distributed under the **MIT License**. Built with pride by the **Horizons Lab** collective.
+Forms confirm storage on the page. Automated email delivery is not configured. Local preview submissions stay on the local machine and are not silently copied to the production database.
+
+## Current preview workflow
+
+The user requested no sub-agents and no UI or other tests for this revision. Keep work in local preview until the user reviews it. No exact-reference-parity or testing claim is made for these changes.

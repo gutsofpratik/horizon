@@ -1,0 +1,65 @@
+{
+  "cowork-sizzle": {
+    "src": "https://assets.claude.com/0d948b3a3dbf8e9669c90f8a669af1be99dd2fa0.webm",
+    "poster": {
+      "url": "https://assets.claude.com/7fd712d62da6778e30efd772ca9c6c95fddbe602.jpg",
+      "alt": ""
+    }
+  },
+  "cowork-hero": {
+    "src": "https://assets.claude.com/674d4b7d272e8dfd054d581e2d0ed6be255d6ca4.webm",
+    "poster": {
+      "url": "https://assets.claude.com/41fd33f925e60b7c56dcc0027553a22f94d14d16.jpg",
+      "alt": ""
+    }
+  },
+  "cowork": {
+    "src": "https://assets.claude.com/032a2abc20d7be25555ccbfbdf0a6a98082156ad.webm",
+    "poster": {
+      "url": "https://assets.claude.com/7e55cc18e798c19805196a7b69733e8775a1b031.jpg",
+      "alt": ""
+    }
+  },
+  "claude-design": {
+    "src": "https://assets.claude.com/f0dd16266306d6e9526aebb58f38a4f46f2c4942.webm",
+    "poster": {
+      "url": "https://assets.claude.com/0a64403535d4c97d8ad7c0f69057520b883d9e31.jpg",
+      "alt": ""
+    }
+  },
+  "chrome-sizzle": {
+    "src": "https://assets.claude.com/2606848edc7f8eace605045078ae377054a33e5d.webm",
+    "poster": {
+      "url": "https://assets.claude.com/39f48bc86d22cbefce1439c4b822b01263d4a1bc.jpg",
+      "alt": ""
+    }
+  },
+  "m365": {
+    "src": "https://assets.claude.com/b1127cc10119805051daadda29d7ff4c3eaeb3e6.webm",
+    "poster": {
+      "url": "https://assets.claude.com/e041f641336d027b6e3ca8dbb07eccc1d4dab5b5.jpg",
+      "alt": ""
+    }
+  },
+  "tag-supercut": {
+    "src": "https://assets.claude.com/ecd1f28c9cda3b9761f9aef5cc1a34907a00f692.webm",
+    "poster": {
+      "url": "https://assets.claude.com/818bb16696d3f883011f41bac490cd8b5771a751.jpg",
+      "alt": ""
+    }
+  },
+  "connectors": {
+    "src": "https://assets.claude.com/6387e8689eb97b78cb80bb040fbb0934429eb672.webm",
+    "poster": {
+      "url": "https://assets.claude.com/2c2d2d3f5d6d0358286ed5bb206c45abc30db67f.jpg",
+      "alt": ""
+    }
+  },
+  "voice": {
+    "src": "https://assets.claude.com/f1487581532ea674858592bedfad0fc1ab66743f.webm",
+    "poster": {
+      "url": "https://assets.claude.com/dcf4599ab3f69f9b9d63007a53f3377e91f0321e.jpg",
+      "alt": ""
+    }
+  }
+}

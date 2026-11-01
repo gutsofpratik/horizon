@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Research memo — Corvex matter</title>
+    <style>
+      :root { color-scheme: light; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; }
+      body {
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        line-height: 1.5;
+        /* Default: clip overflow. The frame below switches to scroll
+           when the scaled-mode container query kicks in. */
+        overflow: hidden;
+      }
+
+      /* ----- Scale frame -----
+         Acts as the scroll container when the artifact renders at a fixed
+         natural size and is scaled down. A container query lets the scaled
+         mode kick in based on the parent's width, not the viewport. */
+      .doc-scale-frame {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        container-type: inline-size;
+      }
+
+      /* ----- Word chrome (matches PPT / Excel viewer style) ----- */
+      .doc-app {
+        background: #f3f2f1;
+        overflow: hidden;
+        border-radius: 8px;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        /* Pinned to desktop size — chrome stays constant until the
+           scaled-mode container query takes over. */
+        font-size: 14px;
+        transform-origin: top left;
+      }
+
+      /* ----- Scaled mode: <= 400px container width -----
+         Pin a natural design footprint, scale it 80%, and let the frame
+         scroll for anything that doesn't fit. */
+      @container (max-width: 400px) {
+        .doc-scale-frame {
+          overflow: hidden;
+        }
+        .doc-app {
+          /* width + height set by JS so visual fills the container at
+             a fixed 0.9 scale; chrome layout adapts to the available
+             width the same way it does above the breakpoint. */
+          transform: scale(0.9);
+        }
+      }
+      .doc-titlebar {
+        display: flex;
+        align-items: center;
+        padding: 0.7em 1em;
+        background: #2b579a;
+        gap: 0.8em;
+      }
+      .doc-titlebar-icon {
+        width: 1.4em;
+        height: 1.4em;
+        background: white;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8em;
+        color: #2b579a;
+      }
+      .doc-titlebar-text {
+        flex: 1;
+        color: white;
+        font-size: 0.9em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .doc-main {
+        display: flex;
+        background: #e1dfdd;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      /* ----- Outline (Navigation pane) panel ----- */
+      .doc-outline-panel {
+        width: min(13em, 22%);
+        background: #f3f2f1;
+        border-right: 1px solid #d2d0ce;
+        padding: 0.6em 0.6em 0.6em 0.6em;
+        display: flex;
+        flex-direction: column;
+        gap: 0.1em;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #a19f9d transparent;
+        transition: width 0.25s ease, padding 0.25s ease;
+        flex-shrink: 0;
+        container-type: inline-size;
+      }
+      .doc-outline-panel::-webkit-scrollbar { width: 4px; }
+      .doc-outline-panel::-webkit-scrollbar-track { background: transparent; }
+      .doc-outline-panel::-webkit-scrollbar-thumb { background: #a19f9d; border-radius: 2px; }
+      .doc-outline-panel.collapsed {
+        width: 2.4em;
+        padding: 0.6em 0.3em;
+      }
+      .doc-outline-panel.collapsed .doc-outline-title,
+      .doc-outline-panel.collapsed .doc-outline-item {
+        display: none;
+      }
+      .doc-outline-panel.collapsed .doc-outline-header {
+        justify-content: center;
+        padding: 0;
+        margin: 0;
+        border-bottom: none;
+      }
+
+      .doc-outline-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.4em;
+        padding: 0.1em 0.2em 0.5em 0.4em;
+        margin-bottom: 0.3em;
+        border-bottom: 1px solid #e1dfdd;
+        flex-shrink: 0;
+      }
+      .doc-outline-title {
+        font-size: 0.8em;
+        font-weight: 600;
+        color: #2b579a;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .doc-outline-toggle {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #605e5c;
+        padding: 0.2em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 3px;
+        flex-shrink: 0;
+        transition: background 0.1s ease, transform 0.25s ease;
+      }
+      .doc-outline-toggle:hover { background: #e8e8e8; color: #2b579a; }
+      .doc-outline-toggle svg { width: 1.1em; height: 1.1em; }
+      .doc-outline-panel.collapsed .doc-outline-toggle { transform: rotate(180deg); }
+
+      .doc-outline-item {
+        font-size: clamp(0.7em, 7cqw, 0.85em);
+        color: #323130;
+        padding: 0.35em 0.6em;
+        border-radius: 3px;
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: background 0.1s ease, color 0.1s ease;
+      }
+      .doc-outline-item:hover { background: #e8e8e8; }
+      .doc-outline-item.active {
+        background: #eaf1fb;
+        color: #2b579a;
+        font-weight: 600;
+        padding-left: 0.3em;
+        padding-right: 0.3em;
+      }
+      .doc-outline-item[data-level="2"] { padding-left: 1.5em; font-size: clamp(0.7em, 6.5cqw, 0.8em); }
+      .doc-outline-item[data-level="3"] { padding-left: 2.5em; font-size: clamp(0.7em, 6cqw, 0.78em); color: #605e5c; }
+
+      /* ----- Pages area (scrolls vertically) ----- */
+      .doc-pages-area {
+        flex: 1;
+        padding: 1.2em 1em;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1em;
+        scrollbar-width: thin;
+        scrollbar-color: #a19f9d transparent;
+      }
+      .doc-pages-area::-webkit-scrollbar { width: 6px; }
+      .doc-pages-area::-webkit-scrollbar-track { background: transparent; }
+      .doc-pages-area::-webkit-scrollbar-thumb { background: #a19f9d; border-radius: 3px; }
+
+      .doc-page-frame {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        aspect-ratio: 816 / 1056; /* US letter portrait */
+        background: white;
+        box-shadow: 0 0.15em 0.5em rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      /* ----- Page canvas -----
+         Every page is rendered at a fixed 816 x 1056 design size
+         (US letter at 96dpi). The frame creates a letter-sized box and
+         scales the page via CSS transform to fit. Authors size content
+         in px against this canvas — same numbers Word uses. */
+      .doc-page {
+        width: 816px;
+        height: 1056px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: top left;
+        background: #ffffff;
+        color: #1f1f1f;
+        padding: 96px 96px; /* ~1in margins at 96dpi */
+        font-family: "Calibri", "Segoe UI", -apple-system, Roboto, sans-serif;
+        font-size: 22px; /* ≈11pt */
+        line-height: 1.5;
+        overflow: hidden;
+      }
+
+      /* ----- Base typography inside a page -----
+         Headings follow Word's default Office theme (Calibri Light,
+         never semibold; #2F5496 for H1/H2, #1F3763 for H3) — semibold
+         web headings read as a designed page, not .docx output. */
+      .doc-page h1 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 56px;
+        font-weight: 600;
+        color: #141413;
+        line-height: 1.15;
+        margin-bottom: 18px;
+      }
+      .doc-page h2 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 36px;
+        font-weight: 600;
+        color: #141413;
+        line-height: 1.2;
+        margin-top: 28px;
+        margin-bottom: 12px;
+      }
+      .doc-page h3 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 28px;
+        font-weight: 600;
+        color: #141413;
+        line-height: 1.3;
+        margin-top: 22px;
+        margin-bottom: 10px;
+      }
+      .doc-page h4 {
+        font-family: "Calibri Light", Calibri, "Segoe UI", sans-serif;
+        font-size: 22px;
+        font-weight: 400;
+        color: #444;
+        font-style: italic;
+        margin-top: 18px;
+        margin-bottom: 8px;
+      }
+      .doc-page p { margin-bottom: 14px; }
+      .doc-page p + p { margin-top: -2px; }
+      .doc-page ul, .doc-page ol { margin: 0 0 14px 40px; }
+      .doc-page li { margin-bottom: 6px; }
+      /* Word's built-in Quote style: indented italic gray. No border
+         or shaded box — those are web-callout grammar. */
+      .doc-page blockquote {
+        margin: 14px 0 14px 48px;
+        color: #404040;
+        font-style: italic;
+      }
+      .doc-page blockquote .doc-quote-source {
+        display: block;
+        margin-top: 6px;
+        font-style: normal;
+        font-size: 19px;
+        color: #605e5c;
+      }
+      .doc-page hr {
+        border: none;
+        border-top: 1px solid #d2d0ce;
+        margin: 20px 0;
+      }
+      .doc-page a { color: #0563c1; text-decoration: underline; }
+      .doc-page code {
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 0.92em;
+      }
+      .doc-page table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 14px 0;
+        font-size: 20px;
+      }
+      /* Default "Table Grid": thin uniform borders, bold unfilled
+         header, no banding — filled/zebra tables are a styled theme
+         Word only applies when asked. */
+      .doc-page th, .doc-page td {
+        border: 1px solid #808080;
+        padding: 8px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .doc-page th {
+        font-weight: 700; background: #e8edf2; color: #141413;
+      }
+
+      /* Page-number footer (optional, auto-inserted) */
+      .doc-page-number {
+        position: absolute;
+        bottom: 40px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 16px;
+        color: #a19f9d;
+      }
+
+      /* ----- Built-in page layouts -----
+         Apply via data-layout="..." on a .doc-page. All sizes are px
+         against the 816x1056 canvas. */
+      .doc-page[data-layout="letterhead"] {
+        padding-top: 200px;
+      }
+      .doc-page[data-layout="letterhead"]::before {
+        content: attr(data-letterhead);
+        position: absolute;
+        top: 70px;
+        left: 96px;
+        right: 96px;
+        font-size: 32px;
+        font-weight: 600;
+        color: #2b579a;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #2b579a;
+      }
+
+      .doc-page[data-layout="cover"] {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 140px 96px;
+        background: linear-gradient(180deg, #2b579a 0%, #1a3e74 100%);
+        color: white;
+      }
+      .doc-page[data-layout="cover"] h1 {
+        font-size: 72px;
+        font-weight: 700;
+        color: white;
+        line-height: 1.1;
+        margin-bottom: 24px;
+      }
+      .doc-page[data-layout="cover"] .doc-subtitle {
+        font-size: 30px;
+        font-weight: 400;
+        opacity: 0.9;
+        margin-bottom: 60px;
+      }
+      .doc-page[data-layout="cover"] .doc-meta {
+        font-size: 20px;
+        opacity: 0.8;
+        line-height: 1.8;
+      }
+
+      .doc-page[data-layout="memo"] {
+        padding: 96px;
+      }
+      /* Memo head as Word would write it: plain "To: / From:" bold-label
+         lines in body ink, closed by a thin bottom-border rule — not a
+         colored small-caps label grid. */
+      .doc-page[data-layout="memo"] .doc-memo-header {
+        font-size: 20px;
+        margin-bottom: 24px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #d2d0ce;
+      }
+      .doc-page[data-layout="memo"] .doc-memo-header dt {
+        float: left;
+        clear: left;
+        font-weight: 700;
+        margin-right: 8px;
+      }
+      .doc-page[data-layout="memo"] .doc-memo-header dt::after { content: ":"; }
+      .doc-page[data-layout="memo"] .doc-memo-header dd {
+        color: #1f1f1f;
+        margin: 0 0 2px 0;
+      }
+
+      /* ----- Bottom bar ----- */
+      .doc-bottombar {
+        display: flex;
+        align-items: center;
+        padding: 0.4em 0.8em;
+        background: #f3f2f1;
+        border-top: 1px solid #d2d0ce;
+        font-size: 0.8em;
+        color: #605e5c;
+        gap: 1em;
+      }
+      .doc-page-counter { flex: 0 0 auto; }
+      .doc-word-count {
+        flex: 1;
+        text-align: right;
+        color: #605e5c;
+      }
+
+    
+
+      /* ----- Card zoom (Skylar 2026-09-03: "content of excel sheet
+         too small to read", extended to every facsimile family) -----
+         Card surfaces pin this document to its authoring box and
+         transform-scale the whole iframe into a far smaller window — the
+         library rails at ~0.44, the modal artifact well at 0.6, the card
+         face at 0.61 — so this chrome's em-derived text was landing at
+         4-6px. Authoring the document zoomed puts the surface's shrink on
+         legible type instead. Here the letter page re-fits itself into whatever the outline panel leaves.
+         Gated on the LAYOUT width so the roles band's ~608px artifact
+         mount and the phone embed page stay 1x. */
+      @media (min-width: 1000px) {
+        .doc-app {
+          font-size: calc(14px * 1.6);
+        }
+      }
+</style>
+  </head>
+  <body>
+    <div class="doc-scale-frame">
+    <div class="doc-app" id="doc-viewer">
+      <div class="doc-titlebar">
+        <div class="doc-titlebar-icon">W</div>
+        <span class="doc-titlebar-text">Document.docx - Word</span>
+      </div>
+
+      <div class="doc-main">
+        <div class="doc-outline-panel">
+          <div class="doc-outline-header">
+            <span class="doc-outline-title">Navigation</span>
+            <button class="doc-outline-toggle" aria-label="Toggle navigation panel" title="Toggle navigation">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 6l-6 6 6 6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="doc-pages-area"></div>
+      </div>
+
+      <div class="doc-bottombar">
+        <span class="doc-page-counter">Page 1 of 1</span>
+        <span class="doc-word-count">0 words</span>
+      </div>
+    </div>
+
+    <!--
+      Legal research memo — the legal use case's Word artifact.
+      Story: the lawyer asked Horizon to research case law on whether the
+      §11.4 limitation-of-liability cap in the Corvex Industries master
+      supply agreement survives Amendment No. 2, verify every citation
+      against CourtListener, summarize the controlling precedent, and
+      draft the application memo. EVERYTHING here is fictional — parties,
+      case names, reporter citations, docket history; never swap in a
+      real case or company. The verification table on the last page is
+      the hero beat: every cite traces to a checked source, nothing in
+      the draft is invented. To repurpose: keep the page and heading
+      skeleton, swap the issue, cases and table rows. Five pages — the
+      816x1056 canvas clips silently at roughly 26 lines of body text
+      per page.
+    -->
+    <template id="doc-pages">
+      <div class="doc-page" data-layout="memo" data-title="corvex-research-memo" data-page-number="true">
+        <dl class="doc-memo-header">
+          <dt>To</dt><dd>Dana Whitfield</dd>
+          <dt>From</dt><dd>Horizon</dd>
+          <dt>Date</dt><dd>August 28, 2026 — prepared 7:41 AM</dd>
+          <dt>Re</dt><dd>Corvex Industries MSA · does the §11.4 liability cap survive Amendment No. 2?</dd>
+        </dl>
+
+        <h2>Question Presented</h2>
+        <p>Under Twelfth Circuit law, does a limitation-of-liability
+          clause in a master supply agreement remain enforceable after the
+          parties execute a negotiated amendment that revises pricing and
+          delivery terms but never mentions the clause?</p>
+
+        <h2>Short Answer</h2>
+        <p>Almost certainly yes. The controlling cases enforce a
+          negotiated cap between sophisticated commercial parties unless a
+          later amendment rewrites the risk allocation in terms that
+          cannot be reconciled with it. Amendment No. 2 changed price
+          tiers and delivery windows, ratified everything else, and never
+          touched Article 11 — squarely the fact pattern where the cap
+          survives.</p>
+        <p>Corvex's likeliest argument — that the amendment's new service
+          credits are a "new remedy" displacing the cap — fails under the
+          same line of cases. Pages 2–3 summarize the precedent; page 4
+          applies it. Every citation was verified against CourtListener on
+          August 28; the check log is on page 5.</p>
+      </div>
+
+      <div class="doc-page" data-page-number="true">
+        <h2>Controlling Precedent</h2>
+        <p>Three decisions control or persuade here: Hartwell states the
+          rule, Veyra marks its outer edge, and Ostrander applies it to an
+          amendment nearly identical to ours.</p>
+
+        <h3>Hartwell v. Brimm Mfg., 214 F.4th 882 (2024)</h3>
+        <p>The anchor. Brimm argued that a mid-term amendment reopening
+          volume commitments dissolved the contract's damages cap. The
+          court enforced the cap as written: between sophisticated
+          parties, a limitation of liability is "a bargained-for
+          allocation of risk, not a term that lapses on renegotiation,"
+          and an amendment leaves it intact unless the new terms address
+          risk allocation in a way that cannot be reconciled with the cap.
+          Silence, the panel held, is not waiver.</p>
+
+        <h3>Veyra Logistics v. Calloway Systems, 198 F.4th 411 (2023)</h3>
+        <p>The outer edge — the one recent case to set a cap aside,
+          because the amendment there replaced the agreement's entire
+          indemnity article with a new remedies scheme the old cap would
+          have rendered illusory. The court read the two provisions as
+          irreconcilable and let the later, negotiated one win. Veyra is
+          the case Corvex will cite; its own facts distinguish it.</p>
+      </div>
+
+      <div class="doc-page" data-page-number="true">
+        <h3>Ostrander v. Pellwick Data Co., 742 F. Supp. 3d 1029 (2024)</h3>
+        <p>The closest facts. A pricing-and-delivery amendment carried a
+          standard ratification clause and never mentioned the liability
+          cap; Pellwick argued the renegotiation had "reopened the whole
+          bargain." The district court, applying Hartwell, enforced the
+          cap and called the ratification clause "dispositive, not
+          boilerplate" — express preservation of unamended terms ends the
+          inquiry. An appeal was docketed in May 2025; no stay issued, and
+          the decision stands as of this memo.</p>
+
+        <h2>Application to Our Matter</h2>
+        <p>Amendment No. 2 to the Corvex master supply agreement does
+          three things: it moves the volume price breaks, shortens
+          delivery windows for the coastal sites, and adds service credits
+          for late delivery. It never mentions Article 11. And its §7
+          ratifies the rest of the agreement in the same words Ostrander
+          enforced:</p>
+        <blockquote>
+          "Except as expressly modified by this Amendment, all terms and
+          conditions of the Agreement remain in full force and effect."
+          <span class="doc-quote-source">— Amendment No. 2, §7 · executed March 14, 2025</span>
+        </blockquote>
+      </div>
+
+      <div class="doc-page" data-page-number="true">
+        <p>Under Hartwell and Ostrander, that is most of the case: a
+          negotiated amendment that is silent on the cap and expressly
+          ratifies unamended terms leaves §11.4 — the greater of $2.0M or
+          twelve months' fees — fully enforceable against Corvex's $11.8M
+          claim.</p>
+        <p><strong>Corvex's best argument fails on Veyra's own
+          terms.</strong> Its July 30 demand letter calls the service
+          credits a "new remedy" that displaces Article 11. But Veyra set
+          a cap aside only where the amendment replaced the remedies
+          scheme wholesale, leaving the cap nothing to operate on. The
+          credits here supplement Article 11 — §3(d) of the amendment
+          labels them "in addition to any other remedy" — which is
+          reconcilable with the cap, and under Hartwell reconcilable means
+          enforced.</p>
+        <p><strong>One watch item.</strong> If Corvex pleads gross
+          negligence or willful misconduct, §11.4's own carve-out — not
+          any amendment theory — becomes the fight. Nothing in the July 30
+          letter pleads it, but this memo's conclusion assumes an ordinary
+          breach claim.</p>
+      </div>
+
+      <div class="doc-page" data-page-number="true">
+        <h2>Citations — verified</h2>
+        <p>Every case cited in this memo was checked against the
+          CourtListener docket before drafting — the citation, the holding
+          it is cited for, and its current status. Confirm each
+          before you rely on it.</p>
+        <table>
+          <thead>
+            <tr><th>Citation</th><th>Cited for</th><th>Verified</th><th>Checked</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Hartwell v. Brimm Mfg., 214 F.4th 882 (2024)</td><td>Caps survive amendment absent irreconcilable conflict; silence is not waiver</td><td>✓ Verified · CourtListener</td><td>Aug 28, 2026</td></tr>
+            <tr><td>Veyra Logistics v. Calloway Systems, 198 F.4th 411 (2023)</td><td>Outer edge — a wholesale remedies rewrite displaces a cap</td><td>✓ Verified · CourtListener</td><td>Aug 28, 2026</td></tr>
+            <tr><td>Ostrander v. Pellwick Data Co., 742 F. Supp. 3d 1029 (2024)</td><td>Ratification clause preserves an unmentioned cap; appeal docketed, no stay</td><td>✓ Verified · CourtListener</td><td>Aug 28, 2026</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Page 6: the sources paragraph alone — it overflowed the page-5
+           canvas (1162px against the 1056 limit, ticket 86) and Word's own
+           pagination would push the trailing paragraph, not shrink it. -->
+      <div class="doc-page" data-page-number="true">
+        <p>Sources: <code>corvex-msa-2023.pdf</code> (§11.4),
+          <code>amendment-no-2.pdf</code> (§§3(d), 7), Corvex demand
+          letter of July 30, 2026; case texts and docket status from
+          CourtListener, checked August 28, 2026.</p>
+      </div>
+
+        </template>
+
+    <script>
+      const DESIGN_WIDTH = 816;
+
+      class WordViewer {
+        constructor(container, config = {}) {
+          this.container = typeof container === "string" ? document.querySelector(container) : container;
+          this.title = config.title || "Document";
+          const source = document.querySelector(config.pagesTemplate || "#doc-pages");
+          this.pages = source ? Array.from(source.content.querySelectorAll(".doc-page")) : [];
+
+          this.pagesArea = this.container.querySelector(".doc-pages-area");
+          this.outlinePanel = this.container.querySelector(".doc-outline-panel");
+          this.outlineToggle = this.container.querySelector(".doc-outline-toggle");
+          this.titleBar = this.container.querySelector(".doc-titlebar-text");
+          this.pageCounter = this.container.querySelector(".doc-page-counter");
+          this.wordCount = this.container.querySelector(".doc-word-count");
+
+          this.pageFrames = [];
+          this.outlineItems = [];
+          this.headings = []; // { el, itemIndex }
+          this.currentPage = 0;
+          this.activeHeadingIdx = 0;
+          this.scaleFrame = this.container.parentElement; // .doc-scale-frame
+          this.SCALED_BREAKPOINT = 400;
+          this.SCALED_FACTOR = 0.9;
+
+          this.init();
+        }
+
+        init() {
+          if (this.titleBar) this.titleBar.textContent = `${this.title}.docx - Word`;
+          document.title = this.title;
+          this.renderPages();
+          this.renderOutline();
+          this.bindOutlineToggle();
+          this.updateWordCount();
+          this.updatePageCounter();
+          this.updateScale();
+          this.rescaleAll();
+          // Observe the pages area so rescaling tracks the sidebar
+          // collapse/expand animation, not just outer-container resizes.
+          const ro = new ResizeObserver(() => {
+            this.updateScale();
+            this.rescaleAll();
+          });
+          ro.observe(this.pagesArea);
+          ro.observe(this.container);
+          if (this.scaleFrame) ro.observe(this.scaleFrame);
+          this.pagesArea.addEventListener("scroll", () => this.onScroll());
+        }
+
+        /** Below the breakpoint, hold a fixed 0.9 scale and set the
+            doc-app's pre-scale width/height to containerSize / 0.9 so the
+            visual fills the container exactly. The internal layout stays
+            responsive at all sizes. */
+        updateScale() {
+          if (!this.scaleFrame) return;
+          const w = this.scaleFrame.clientWidth;
+          const h = this.scaleFrame.clientHeight;
+          if (w <= this.SCALED_BREAKPOINT) {
+            this.container.style.width = (w / this.SCALED_FACTOR) + "px";
+            this.container.style.height = (h / this.SCALED_FACTOR) + "px";
+          } else {
+            this.container.style.width = "";
+            this.container.style.height = "";
+          }
+        }
+
+        bindOutlineToggle() {
+          if (!this.outlineToggle) return;
+          this.outlineToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.outlinePanel.classList.toggle("collapsed");
+          });
+        }
+
+        renderPages() {
+          this.pagesArea.innerHTML = "";
+          this.pageFrames = [];
+          this.pages.forEach((page, i) => {
+            const frame = document.createElement("div");
+            frame.className = "doc-page-frame";
+            frame.dataset.index = String(i);
+            const clone = page.cloneNode(true);
+
+            // Auto page number injection
+            if (clone.dataset.pageNumber === "true") {
+              const num = document.createElement("div");
+              num.className = "doc-page-number";
+              num.textContent = String(i + 1);
+              clone.appendChild(num);
+            }
+            frame.appendChild(clone);
+            this.pagesArea.appendChild(frame);
+            this.pageFrames.push(frame);
+            this.scalePage(frame);
+          });
+        }
+
+        scalePage(frame) {
+          const page = frame.querySelector(".doc-page");
+          if (!page) return;
+          const width = frame.getBoundingClientRect().width;
+          if (width > 0) {
+            page.style.transform = `scale(${width / DESIGN_WIDTH})`;
+          }
+        }
+
+        rescaleAll() {
+          this.pageFrames.forEach((f) => this.scalePage(f));
+        }
+
+        /** Auto-build the Navigation pane from h1/h2/h3 across all pages.
+            Each outline item maps to exactly one heading — clicks and
+            active-tracking operate at heading granularity, not page. */
+        renderOutline() {
+          if (!this.outlinePanel) return;
+          this.outlinePanel.querySelectorAll(".doc-outline-item").forEach((el) => el.remove());
+          this.outlineItems = [];
+          this.headings = [];
+
+          let headingCount = 0;
+          this.pageFrames.forEach((frame, pageIdx) => {
+            const page = frame.querySelector(".doc-page");
+            if (!page) return;
+            const headings = page.querySelectorAll("h1, h2, h3");
+            headings.forEach((h) => {
+              const level = parseInt(h.tagName.substring(1), 10);
+              const id = `doc-h-${headingCount++}`;
+              h.id = id;
+              const headingIdx = this.headings.length;
+              this.headings.push({ el: h, pageIdx });
+
+              const item = document.createElement("div");
+              item.className = "doc-outline-item";
+              item.dataset.level = String(level);
+              item.dataset.headingIdx = String(headingIdx);
+              item.textContent = h.textContent;
+              item.title = h.textContent;
+              item.addEventListener("click", () => this.scrollToHeading(headingIdx));
+              this.outlinePanel.appendChild(item);
+              this.outlineItems.push(item);
+            });
+          });
+
+          if (this.outlineItems.length === 0) {
+            this.outlinePanel.style.display = "none";
+          } else {
+            this.setActiveHeading(0);
+          }
+        }
+
+        scrollToHeading(index) {
+          const h = this.headings[index];
+          if (!h) return;
+          // Use scrollIntoView on the heading — its bounding rect accounts
+          // for the page's CSS transform scale, so it lands correctly.
+          h.el.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Optimistically mark active; onScroll will reconcile when the
+          // smooth scroll settles.
+          this.setActiveHeading(index);
+        }
+
+        onScroll() {
+          // --- Track current page for the bottom-bar counter ---
+          const areaRect = this.pagesArea.getBoundingClientRect();
+          const areaCenter = areaRect.top + areaRect.height / 2;
+          let closestPage = 0;
+          let closestPageDist = Infinity;
+          this.pageFrames.forEach((frame, i) => {
+            const r = frame.getBoundingClientRect();
+            const frameCenter = r.top + r.height / 2;
+            const dist = Math.abs(frameCenter - areaCenter);
+            if (dist < closestPageDist) { closestPageDist = dist; closestPage = i; }
+          });
+          if (closestPage !== this.currentPage) {
+            this.currentPage = closestPage;
+            this.updatePageCounter();
+          }
+
+          // --- Track active heading individually ---
+          // The active heading is the last one whose top has crossed a
+          // threshold just below the top of the pages area. This means
+          // selecting an h3 highlights only that h3 — never its siblings.
+          if (this.headings.length === 0) return;
+          const threshold = areaRect.top + 80;
+          let activeIdx = 0;
+          for (let i = 0; i < this.headings.length; i++) {
+            const top = this.headings[i].el.getBoundingClientRect().top;
+            if (top <= threshold) {
+              activeIdx = i;
+            } else {
+              break;
+            }
+          }
+          if (activeIdx !== this.activeHeadingIdx) {
+            this.setActiveHeading(activeIdx);
+          }
+        }
+
+        setActiveHeading(index) {
+          this.activeHeadingIdx = index;
+          this.outlineItems.forEach((item, i) => {
+            item.classList.toggle("active", i === index);
+          });
+          const active = this.outlineItems[index];
+          if (active) {
+            // Keep the active item visible in the nav panel without
+            // hijacking the main document scroll.
+            const panelRect = this.outlinePanel.getBoundingClientRect();
+            const itemRect = active.getBoundingClientRect();
+            if (itemRect.top < panelRect.top || itemRect.bottom > panelRect.bottom) {
+              active.scrollIntoView({ block: "nearest" });
+            }
+          }
+        }
+
+        updatePageCounter() {
+          if (this.pageCounter) {
+            this.pageCounter.textContent = `Page ${this.currentPage + 1} of ${this.pageFrames.length}`;
+          }
+        }
+
+        updateWordCount() {
+          if (!this.wordCount) return;
+          let count = 0;
+          this.pageFrames.forEach((frame) => {
+            const text = frame.innerText || "";
+            const words = text.trim().match(/\S+/g);
+            if (words) count += words.length;
+          });
+          this.wordCount.textContent = `${count.toLocaleString()} words`;
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const firstTitle = document
+          .querySelector("#doc-pages")
+          ?.content?.querySelector(".doc-page")
+          ?.dataset?.title;
+        new WordViewer("#doc-viewer", {
+          title: firstTitle || "Document",
+          pagesTemplate: "#doc-pages",
+        });
+      });
+    </script>
+    </div>
+  </body>
+</html>
