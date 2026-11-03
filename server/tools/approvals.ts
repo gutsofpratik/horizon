@@ -1,0 +1,37 @@
+import {lifecycle} from '../runtime/hooks.ts';
+import {randomUUID} from 'node:crypto';import type {ToolContext} from './registry.ts';import type {AppContext} from '../app.ts';
+export type ApprovalMode='ask'|'auto'|'full';
+const readOnly=/^(?:artifact_(?:read|list)|browser_(?:snapshot|screenshot|find|zoom|scroll)|computer_(?:screenshot|wait|windows)|terminal_read|tool_output_read|document_(?:extract|inspect)|pdf_inspect|spreadsheet_inspect|web_search|web_fetch|plan_read|goal_read|goal_list|memory_search|chat_history_|conversation_|skills_list|skill_load|skill_read_resource|runtime_capabilities|clock_now|calculate|discover_tools)/;
+export function needsApproval(name:string,mode:ApprovalMode,args:any={}){
+ if(isAdvancedReadTool(name))return false;
+ if(name==='network_upload'||name==='web_download_file'||name==='mcp_connect'||name==='mcp_disconnect'||name==='audio_transcribe'||name==='git_checkout')return true;
+ if(name==='team_read'||name==='team_message'||name==='team_progress')return false;
+ if(name==='terminal_resize'||name==='plan_create'||name==='plan_update')return false;
+ if(['browser_run_script','browser_site_call'].includes(name))return true;
+ if(name==='browser_upload'||name==='shell_install_package')return true;
+ if(name.startsWith('shell_'))return false; // Concrete terminal leaves enforce their own approval.
+ if(name==='browser_download')return false; // Native confirmation or the web handler requests approval at the save boundary.
+ if(name==='mcp_call_tool')return false; // The selected connector tool checks its own approval.
+ if(name==='http_request'&&args.method!=='GET')return true;
+ if(/^git_(?:clone|commit|restore|reset|revert|cherry_pick|stash|stash_pop|branch|switch|merge|rebase|worktree_add|worktree_remove|worktree_prune|pull|push|pr_create|pr_checkout|pr_review|pr_merge)$/.test(name))return true;
+ if(name==='goal'&&['list','read'].includes(args.action))return false;
+ if(mode==='full'||readOnly.test(name)||name==='browser_tabs'&&args.action!=='close'||name==='ask_user')return false;
+ if(mode==='auto'&&/^(?:artifact_|plan_|goal_|document_create|pdf_edit|spreadsheet_(?:create|edit)|slides_create|chart_create|image_transform|memory_(?:save|update)|files_(?:read|list|search|write|patch)|browser_open(?:_file)?$)/.test(name))return false;
+ return true;
+}
+function publicArgs(value:any,depth=0):any {if(depth>5)return '[nested]';if(typeof value==='string')return value.slice(0,2000);if(Array.isArray(value))return value.slice(0,20).map(item=>publicArgs(item,depth+1));if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,/password|secret|token|api.?key|authorization/i.test(key)?'[redacted]':publicArgs(item,depth+1)]));return value;}
+const fault=(code:string,message:string)=>Object.assign(new Error(message),{code});
+export function pendingApprovals(app:AppContext,runId:string){return [...app.ephemeral.entries()].filter(([key])=>key.startsWith('approval:'+runId+':')).map(([,item])=>item.record);}
+export function resolveApproval(app:AppContext,runId:string,id:string,approved:boolean){const item=app.ephemeral.get('approval:'+runId+':'+id);if(!item||item.record.status!=='pending')throw fault('APPROVAL_NOT_PENDING','This action is no longer awaiting approval');item.finish(approved);return {ok:true};}
+export async function requestApproval(name:string,args:any,ctx:ToolContext):Promise<void>{
+ if(ctx.app.ephemeral.has('lifecycleHooks'))await lifecycle(ctx,'PermissionRequest',{tool_name:name,tool_input:args});
+ const record={id:randomUUID(),runId:ctx.runId,conversationId:ctx.conversationId,messageId:ctx.messageId,name,arguments:publicArgs(args),status:'pending',createdAt:new Date().toISOString()},key='approval:'+ctx.runId+':'+record.id;
+ return new Promise((resolve,reject)=>{
+  let done=false;
+  const finish=(approved:boolean,cancelled=false)=>{if(done)return;done=true;ctx.signal.removeEventListener('abort',abort);record.status=cancelled?'cancelled':approved?'approved':'denied';ctx.app.ephemeral.delete(key);if(!ctx.incognito)ctx.app.store.put('approvals',record);ctx.emit('approval.resolved',{id:record.id,status:record.status});if(cancelled)reject(fault('CANCELLED','Action cancelled without approval'));else if(!approved)reject(fault('APPROVAL_DENIED','The user denied this action. Do not retry it or switch tools to perform the same action without new authorization.'));else resolve();};
+  const abort=()=>finish(false,true);
+  ctx.app.ephemeral.set(key,{record,finish});if(!ctx.incognito)ctx.app.store.put('approvals',record);
+  ctx.signal.addEventListener('abort',abort,{once:true});ctx.emit('approval.requested',record);ctx.emit('model.status',{messageId:ctx.messageId,phase:'approval'});if(ctx.signal.aborted)abort();
+ });
+}
+import {isAdvancedReadTool} from './advanced-access.ts';

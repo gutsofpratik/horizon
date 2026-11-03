@@ -1,0 +1,4 @@
+import {Monitor,Loader2} from 'lucide-react';
+export function WebComputerControl({busy,call,screenshot,executionEnvironmentId}:any){
+ return <><h3>Computer use</h3><p className="form-note">{executionEnvironmentId?'Connected execution environment. Observe the screen before each action.':'Choose an execution environment in Settings → Environments to connect a desktop. Browser access does not grant control of your personal computer.'}</p><button className="secondary-button" disabled={busy||!executionEnvironmentId} onClick={()=>void call('computer_screenshot',{})}>{busy?<Loader2 size={14}/>:<Monitor size={14}/>}Refresh screen</button>{executionEnvironmentId&&screenshot?<img className="workspace-screenshot" src={screenshot.url??'data:image/png;base64,'+screenshot.image} alt="Execution environment desktop screenshot"/>:<p className="form-note">{executionEnvironmentId?'Waiting for the desktop screenshot…':'No desktop connected.'}</p>}</>;
+}

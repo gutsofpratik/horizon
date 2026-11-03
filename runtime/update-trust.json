@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEASYrtKAt0QvJEagvyNM0gqNwyoVpeDPAbI6TTG8+D0Rc=\n-----END PUBLIC KEY-----\n",
+  "endpoint": "https://github.com/gutsofpratik/Horizon/releases/latest/download/update.json"
+}

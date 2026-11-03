@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "packs": [],
+  "skills": [
+    {
+      "id": "openclaude-tool-author",
+      "name": "openclaude-tool-author",
+      "description": "Create a reusable typed tool from a verified sequence of existing Horizon tools when no existing leaf tool already does the job.",
+      "sourceFamily": "Horizon",
+      "builtIn": true,
+      "bundledEntry": "built-in/tool-author/SKILL.md",
+      "requirements": [],
+      "sha256": "205a75f7e5634fa5e17f0b39763d6cfb397c881ab797998f99e42e07f99fda05"
+    },
+    {
+      "id": "openclaude-skill-author",
+      "name": "openclaude-skill-author",
+      "description": "Create or improve a reusable personal workflow skill when repeated work needs specific instructions beyond ordinary model knowledge.",
+      "sourceFamily": "Horizon",
+      "builtIn": true,
+      "bundledEntry": "built-in/skill-author/SKILL.md",
+      "requirements": [],
+      "sha256": "038744de3c5b316040f12c38abcc0800216924e82f4331e69f1f8accedca5463"
+    },
+    {
+      "id": "app-native/research-workflow",
+      "name": "research-workflow",
+      "description": "Plan topic-specific research, compare evidence and produce a cited report with verified website counts.",
+      "sourceFamily": "Horizon",
+      "builtIn": true,
+      "bundledEntry": "app-research/SKILL.md",
+      "requirements": [],
+      "sha256": "18ca1ebf354517b84754dc8694f859d52a0e6f27a7869e762fd00e7bb82054e2"
+    }
+  ]
+}
