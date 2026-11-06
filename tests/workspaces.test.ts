@@ -59,3 +59,23 @@ test('Code executes a two-file task and validates its result using a real Node t
   const root=workspaceRoot({app,conversationId:run.conversationId});assert.equal(await readFile(join(root,'client/app.cjs'),'utf8'),'exports.value=1;');assert.equal(await readFile(join(root,'server/app.cjs'),'utf8'),'exports.value=2;');
  }finally{store.close();await rm(directory,{recursive:true,force:true});}
 });
+
+test('HTTP run requests accept and persist every workspace and tutoring combination',async()=>{
+ const {default:Fastify}=await import('fastify');const {registerAgentRoutes}=await import('../server/agent/routes.ts');
+ const directory=await mkdtemp(join(tmpdir(),'horizon-run-request-'));const store=new Store(':memory:');
+ const context:any={root:process.cwd(),dataDirectory:directory,store,ephemeral:new Map()};const app=Fastify();
+ app.setErrorHandler((error,_request,reply)=>reply.code(400).send({error:error.message}));
+ store.put('settings',{id:'main',providerId:'fixture',model:'fixture',memoryEnabled:false});store.put('providers',{id:'fixture',name:'Fixture',type:'openai',baseUrl:'http://127.0.0.1:1/v1'});
+ registerAgentRoutes(app,context,new ToolRegistry(context));
+ const agent=context.ephemeral.get('agent') as Agent;
+ (agent as any).infer=async function*(){yield {type:'content',text:'Hello.'};yield {type:'done',reason:'stop'};};
+ try{
+  for(const mode of ['chat','cowork','code'])for(const tutoringMode of ['adaptive','direct','socratic']){
+   const response=await app.inject({method:'POST',url:'/api/runs',payload:{content:'Hello',mode,tutoringMode}});
+   assert.equal(response.statusCode,200,response.body);const run=response.json();await agent.tasks.get(run.id);
+   const conversation=agent.conversation(run.conversationId);assert.equal(conversation.mode,mode);assert.equal(conversation.tutoringMode,tutoringMode);
+  }
+  const invalid=await app.inject({method:'POST',url:'/api/runs',payload:{content:'Hello',tutoringMode:'invalid'}});assert.equal(invalid.statusCode,400);
+  const unknown=await app.inject({method:'POST',url:'/api/runs',payload:{content:'Hello',unexpectedField:true}});assert.equal(unknown.statusCode,400);
+ }finally{await app.close();store.close();await rm(directory,{recursive:true,force:true});}
+});
