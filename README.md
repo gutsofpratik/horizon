@@ -4,6 +4,8 @@
 
 All editions use the same application screens and styles, including the model library, managed models, runtime packs, settings categories, Teams, Automation, connectors, and workspace tabs. The web adapter renders real shared components instead of empty placeholders. The web host registers model and inference services without granting a native desktop broker connection.
 
+Model setup and voice settings share their model-library controls across editions. The web source export retains these screens, host inference, environment tools, and shared contracts. CUDA setup repairs the private CUDA runtime and cuBLAS dependencies on Linux and Windows. Model loading shows the actual reported weight percentage before “Model loading,” with an adjacent details arrow; preparation stages without measurable progress remain indeterminate.
+
 Browser model paths refer to files on the authenticated Horizon host. Native desktop editions use operating-system file dialogs. Browser terminal and computer panels require an explicitly configured execution environment; opening the web app does not grant control of the visitor's computer. macOS retains its native adapters and system permissions. Linux Wayland control uses the Remote Desktop portal and a user-approved PipeWire stream.
 
 Run `npm run typecheck`, `npm run lint`, and `npm run test:platform-ui` to check source changes. No new installer, setup package, release tag, or binary is published by this source update. Existing releases remain separate from this commit. Native macOS runtime behavior must be checked on macOS; shared source checks do not establish complete OS feature parity.

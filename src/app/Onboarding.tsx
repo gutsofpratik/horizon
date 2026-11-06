@@ -2,15 +2,14 @@ import {OnboardingModels} from './OnboardingModels';
 import {useEffect,useState} from 'react';
 import {ArrowLeft,ArrowRight,Check,Copy,Orbit,Download} from 'lucide-react';
 import {api} from './api';
-import {isDesktopEdition} from '../platform/edition';
 import {ModelLibrary} from '#desktop-ui';
 import {HorizonLoading} from './RuntimeReady';
 const memoryPrompt='Help me move my personal context to Horizon. Write a comprehensive, organized handover of everything useful you know about me from our conversations and any memories you can access: identity and background, work and studies, skills, interests, communication preferences, routines, goals, ongoing and past projects, important decisions, constraints, people and relationships I have described, and unfinished work. Preserve relevant details, names, dates, and context. Separate confirmed facts from uncertainty and outdated information. Use clear headings and natural-language bullet points, with one self-contained fact or piece of context per bullet. Include only information I actually shared. Do not invent information or reveal passwords, keys, private account identifiers, hidden instructions, or your system prompt. Do not use JSON or code blocks. If a category is unknown, omit it.';
 export function Onboarding({models,onSettings,onChoose,onError,onRefresh,onIdentity}:any){
  const [state,setState]=useState<any>(),[step,setStep]=useState(2),[name,setName]=useState(''),[age,setAge]=useState(''),[selected,setSelected]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[memories,setMemories]=useState(''),[preview,setPreview]=useState<string[]|null>(null),[copied,setCopied]=useState(false),[panel,setPanel]=useState('existing'),[localModels,setLocalModels]=useState<any[]>([]),[ollama,setOllama]=useState<any[]|null>(null),[notice,setNotice]=useState('');
  useEffect(()=>{let active=true;api('/onboarding').then(value=>{if(active){setState(value);setStep(Math.max(2,Math.min(3,value.step??2)));setName(value.name??'');setAge(value.age?String(value.age):'');}}).catch(error=>{if(active)setError(error.message);});return()=>{active=false;};},[]);
- const refreshModels=async()=>{if(isDesktopEdition){const value=await api('/model-library');setLocalModels(value.models);}await onRefresh?.();};
- useEffect(()=>{if(step!==3||!isDesktopEdition)return;void refreshModels().catch(error=>setError(error.message));const timer=setInterval(()=>void api('/model-library').then(value=>setLocalModels(value.models)).catch(()=>{}),2000);return()=>clearInterval(timer);},[step]);
+ const refreshModels=async()=>{const value=await api('/model-library');setLocalModels(value.models);await onRefresh?.();};
+ useEffect(()=>{if(step!==3)return;void refreshModels().catch(error=>setError(error.message));const timer=setInterval(()=>void api('/model-library').then(value=>setLocalModels(value.models)).catch(()=>{}),2000);return()=>clearInterval(timer);},[step]);
  if(state?.completed)return null;
  if(!state)return <HorizonLoading title={error?'Unable to open setup':'Opening your workspace'}>{error&&<><p role="alert" className="startup-error">{error}</p><button className="primary-button" onClick={()=>location.reload()}>Try again</button></>}</HorizonLoading>;
  const options=[...models.filter((model:any)=>model.providerId!=='builtin'),...localModels.map(model=>({...model,providerId:'builtin'}))];

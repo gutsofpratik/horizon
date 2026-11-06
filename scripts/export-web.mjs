@@ -1,22 +1,36 @@
-import {mkdir,cp,readFile,writeFile,readdir,stat} from 'node:fs/promises';import {resolve,join,relative,isAbsolute,sep} from 'node:path';
-const root=process.cwd();const target=process.env.HORIZON_WEB_EXPORT_DIR?resolve(process.env.HORIZON_WEB_EXPORT_DIR):resolve('public-release','web');const inside=(rel)=>!isAbsolute(rel)&&rel!=='..'&&!rel.startsWith('..'+sep);if(inside(relative(root,target))&&!inside(relative(resolve(root,'public-release'),target)))throw new Error('Web export target must be outside the checkout or inside public-release');await mkdir(target,{recursive:true});
-const excluded=['server/skills/ecosystem','skills/ecosystem','third-party/skills','src/styles/model-library.css','src/desktop','server/desktop.ts','server/runtime/native-broker.ts','src/settings/ModelLibrary.tsx','src/settings/ManagedModels.tsx','skills/source-packs','runtime/models','runtime/worker/browser.mjs','runtime/worker/desktop.mjs','runtime/worker/desktop-input.py','runtime/worker/terminal.mjs'];
-const allowed=['skills/official-plugin-catalog.json','skills/repository-catalog.json','src','server','runtime','index.html','tsconfig.json','vite.config.ts','scripts/runtime-up.ts','scripts/runtime-health.ts'];
+import {mkdir,cp,readFile,writeFile,readdir,stat,unlink} from 'node:fs/promises';
+import {resolve,join,relative,isAbsolute,sep} from 'node:path';
+const root=process.cwd();
+const target=process.env.HORIZON_WEB_EXPORT_DIR?resolve(process.env.HORIZON_WEB_EXPORT_DIR):resolve('public-release','web');
+const inside=rel=>!isAbsolute(rel)&&rel!=='..'&&!rel.startsWith('..'+sep);
+if(inside(relative(root,target))&&!inside(relative(resolve(root,'public-release'),target)))throw new Error('Web export target must be outside the checkout or inside public-release');
+await mkdir(target,{recursive:true});
+// Keep shared UI, inference, skills and environment tools. Native OS control
+// remains behind the desktop host entry point and the authenticated broker.
+const excluded=['src/desktop','server/desktop.ts','server/runtime/native-broker.ts','skills/source-packs'];
+const allowed=['src','server','runtime','skills','packages/contracts','index.html','tsconfig.json','vite.config.ts','scripts/runtime-up.ts','scripts/runtime-health.ts'];
+const privatePart=/^(?:\.local|\.git|node_modules|__pycache__|\.env(?:\..*)?)$/i;
 const files=[];
-async function removeGeneratedPrivateFiles(){let previous;try{previous=JSON.parse(await readFile(join(target,'PUBLIC-EXPORT.json'),'utf8'));}catch{return;}const {unlink}=await import('node:fs/promises');for(const file of previous.files??[]){if(!excluded.some(path=>file===path||file.startsWith(path+'/')))continue;const destination=resolve(target,file);if(!destination.startsWith(target+'\\')&&!destination.startsWith(target+'/'))throw new Error('Export path escaped its target');try{await unlink(destination);}catch(error){if(error.code!=='ENOENT')throw error;}}}
-await removeGeneratedPrivateFiles();
-async function copy(source){const item=relative(root,source).replaceAll('\\','/');if(excluded.some(path=>item===path||item.startsWith(path+'/'))||item.includes('/__pycache__/')||item.endsWith('.pyc'))return;const info=await stat(source);if(info.isDirectory()){for(const name of await readdir(source))await copy(join(source,name));}else{const destination=join(target,item);await mkdir(resolve(destination,'..'),{recursive:true});await cp(source,destination);files.push(item);}}
+let previous;try{previous=JSON.parse(await readFile(join(target,'PUBLIC-EXPORT.json'),'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;}
+for(const file of previous?.files??[]){
+ if(!excluded.some(path=>file===path||file.startsWith(path+'/')))continue;
+ if(!inside(relative(target,resolve(target,file))))throw new Error('Export path escaped its target');
+ await unlink(resolve(target,file)).catch(error=>{if(error.code!=='ENOENT')throw error;});
+}
+async function copy(source){
+ const item=relative(root,source).split(sep).join('/');
+ if(item.split('/').some(part=>privatePart.test(part))||excluded.some(path=>item===path||item.startsWith(path+'/'))||/\.(?:pyc|gguf|safetensors|sqlite(?:-wal|-shm)?|pem|pfx|p12)$/i.test(item))return;
+ const info=await stat(source);
+ if(info.isDirectory()){for(const name of await readdir(source))await copy(join(source,name));}
+ else{const destination=join(target,item);await mkdir(resolve(destination,'..'),{recursive:true});await cp(source,destination);files.push(item);}
+}
 for(const path of allowed)await copy(join(root,path));
-for(const file of files.filter(path=>path.startsWith('server/')&&path.endsWith('.ts'))){const path=join(target,file);const source=await readFile(path,'utf8');const rewritten=source.replace(/(from\s*['"])([^'"]*?)ecosystem\/[^'"]+(['"])/g,'$1$2web-ecosystem.ts$3');if(rewritten!==source)await writeFile(path,rewritten);}
-const pkg=JSON.parse(await readFile(join(root,'package.json'),'utf8'));pkg.name='horizon-web';pkg.description='Horizon web companion with Ollama connections and a real browser viewer';pkg.scripts={dev:pkg.scripts.dev,build:pkg.scripts.build,start:pkg.scripts.start,'runtime:up':pkg.scripts['runtime:up'],'runtime:health':pkg.scripts['runtime:health']};for(const name of ['@tauri-apps/api','node-pty'])delete pkg.dependencies[name];delete pkg.devDependencies['@tauri-apps/cli'];await writeFile(join(target,'package.json'),JSON.stringify(pkg,null,2)+'\n');
-let app=await readFile(join(target,'server/app.ts'),'utf8');app=app.split('\n').filter(line=>!line.includes('registerNativeBroker')&&!line.includes('registerModelRuntime')&&!line.includes("app.post('/api/native/connect'")).join('\n');await writeFile(join(target,'server/app.ts'),app);
-await writeFile(join(target,'server/runtime/native.ts'),"export function nativeAvailable(..._:any[]){return false;}\nexport async function nativeRequest(..._:any[]):Promise<any>{throw new Error('Native desktop tools are unavailable in the web edition');}\n");
-let runtimeTools=await readFile(join(target,'server/runtime/tools.ts'),'utf8');runtimeTools=runtimeTools.split('\n').filter(line=>!line.includes("add('terminal_")&&!line.includes("add('computer_")&&!line.includes("name:'skill_run_script'")).join('\n');await writeFile(join(target,'server/runtime/tools.ts'),runtimeTools);
-for(const path of ['server/agent/routes.ts','server/files/routes.ts']){let source=await readFile(join(target,path),'utf8');source=source.replace(/edition:request\.headers\['user-agent'\]\?\.includes\('OpenClaudeDesktop'\)\?'desktop':'web'/g,"edition:'web'");await writeFile(join(target,path),source);}
-await writeFile(join(target,'vite.config.ts'),"import {defineConfig} from 'vite';import react from '@vitejs/plugin-react';import {resolve} from 'node:path';export default defineConfig({resolve:{alias:{'#desktop-ui':resolve('src/platform/web-ui.tsx')}},plugins:[react()],server:{port:5173,strictPort:true,proxy:{'/api':{target:'http://127.0.0.1:3001',changeOrigin:false}}}});\n");
-await writeFile(join(target,'server/index.ts'),"import {resolve} from 'node:path';import {existsSync} from 'node:fs';import staticFiles from '@fastify/static';import {createApp} from './app.ts';const app=await createApp({dataDirectory:resolve('.local'),root:process.cwd()});if(existsSync(resolve('dist/index.html'))){await app.register(staticFiles,{root:resolve('dist')});app.setNotFoundHandler((request,reply)=>request.url.startsWith('/api/')?reply.code(404).send({error:'Not found'}):reply.sendFile('index.html'));}await app.listen({port:Number(process.env.PORT??3001),host:'127.0.0.1'});console.log('Horizon Web API ready');\n");
-let worker=await readFile(join(target,'runtime/worker/index.mjs'),'utf8');worker=worker.replace("import {chromium} from 'playwright';",'').replace("import {terminal,cancelJobs} from './terminal.mjs';",'').replace("import {browser,closeBrowser} from './browser.mjs';",'').replace("import {computer,desktopSession} from './desktop.mjs';",'').replace("browser:existsSync(chromium.executablePath()),desktop:existsSync('/usr/bin/Xvfb'),",'').replace("cancelJobs(session);await closeBrowser(session);",'').split('\n').filter(line=>!line.includes("operation.startsWith('terminal_')")&&!line.includes("operation.startsWith('browser_')return")&&!line.includes("operation.startsWith('computer_')return")).join('\n');await writeFile(join(target,'runtime/worker/index.mjs'),worker);
-await mkdir(join(target,'skills'),{recursive:true});await writeFile(join(target,'skills/catalog.json'),JSON.stringify({schemaVersion:1,skills:[],packs:[]}));
+const pkg=JSON.parse(await readFile(join(root,'package.json'),'utf8'));
+pkg.workspaces=['packages/contracts'];
+pkg.name='horizon-web';pkg.description='Horizon shared workspace UI with host inference and connected execution environments';
+pkg.scripts=Object.fromEntries(['dev','build','start','runtime:up','runtime:health'].map(name=>[name,pkg.scripts[name]]));
+delete pkg.devDependencies['@tauri-apps/cli'];
+await writeFile(join(target,'package.json'),JSON.stringify(pkg,null,2)+'\n');
 await writeFile(join(target,'.gitignore'),'node_modules/\ndist/\n.local/\n.env\n*.sqlite*\n*.log\n');
 await writeFile(join(target,'PUBLIC-EXPORT.json'),JSON.stringify({edition:'web',createdAt:new Date().toISOString(),files:files.sort(),excluded},null,2));
-console.log('Web-only source prepared at '+target+'; nothing was published.');
+console.log('Web source exported with shared UI and inference at '+target);

@@ -22,10 +22,18 @@ export class EngineEnvironment {
   if(engine==='download')probe='import huggingface_hub;assert huggingface_hub.__version__=="2.2.0"';
   else if(engine==='transformers')probe='import torch,transformers,accelerate,psutil,lmformatenforcer;assert torch.__version__.split("+")[0]=="2.14.1";assert transformers.__version__=="5.19.0"'+(needsCuda?';assert torch.cuda.is_available(),"CUDA PyTorch cannot access the GPU; check the NVIDIA driver"':'');
   else{const module=engine==='mlx'?'mlx_lm':'llama_cpp';probe='import sys;sys.path.insert(0,'+JSON.stringify(join(this.root,'runtime/models'))+');import native_worker;import '+module+(engine==='mlx'?'':';assert '+module+'.__version__=="0.3.36"'+(needsCuda?';assert '+module+'.llama_supports_gpu_offload();assert "CUDA" in '+module+'.llama_print_system_info().decode()':''));}
-  try{await exec(this.python,['-c',probe],{windowsHide:true,timeout:30000});this.status='ready';return this.python;}catch{}
+  try{await exec(this.python,['-c',probe],{windowsHide:true,timeout:30000});this.status='ready';this.error='';return this.python;}catch{}
+  // Repair existing CUDA wheels without downloading/replacing the model runtime.
+  if(engine==='llama.cpp'&&needsCuda){
+   try{await access(this.python);await this.installCudaLibraries();await this.run(this.python,['-c',probe]);this.status='ready';this.error='';return this.python;}catch{}
+  }
   return this.install(engine,needsCuda,probe);
  }
  private async run(command:string,args:string[]){await new Promise<void>((resolve,reject)=>{const child=spawn(command,args,{env:{...process.env,OPENCLAUDE_HOST_TOKEN:undefined},windowsHide:true,detached:process.platform!=='win32',stdio:['ignore','pipe','pipe']});if(this.app)registerOwnedProcess(this.app,child,'inference-setup',command,process.platform!=='win32');for(const stream of [child.stdout,child.stderr])stream.on('data',chunk=>{this.log=(this.log+chunk.toString()).slice(-6000);});child.on('error',reject);child.on('exit',code=>code===0?resolve():reject(new Error('Runtime setup failed: '+this.log.slice(-2000))));});}
+ private async installCudaLibraries(){
+  this.status='installing';
+  await this.run(this.python,['-m','pip','install','--only-binary=:all:','nvidia-cuda-runtime==13.2.86','nvidia-cublas==13.2.2.2']);
+ }
  private async install(engine:string,cuda:boolean,probe:string){
   this.status='installing';this.error='';this.log='';
   try{
@@ -44,9 +52,9 @@ export class EngineEnvironment {
    else{
     const variant=cuda?'cu132':process.platform==='darwin'&&process.arch==='arm64'?'metal':'cpu';
     await this.run(this.python,['-m','pip','install','--force-reinstall','--only-binary=:all:','--extra-index-url','https://abetlen.github.io/llama-cpp-python/whl/'+variant,'llama-cpp-python==0.3.36']);
-    if(variant==='cu132'&&process.platform==='win32')await this.run(this.python,['-m','pip','install','--only-binary=:all:','nvidia-cublas==13.2.2.2']);
+    if(variant==='cu132')await this.installCudaLibraries();
    }
-   await this.run(this.python,['-c',probe]);this.status='ready';return this.python;
+   await this.run(this.python,['-c',probe]);this.status='ready';this.error='';return this.python;
   }catch(error){this.status='failed';this.error=(error as Error).message;throw error;}
  }
 }

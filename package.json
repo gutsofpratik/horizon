@@ -29,7 +29,7 @@
     "skills:catalog": "tsx scripts/build-skill-ecosystem.ts",
     "skills:frameworks": "tsx scripts/build-skill-frameworks.ts && tsx scripts/build-aas-catalog-data.ts",
     "export:source": "node scripts/release/export-source.mjs",
-    "test:platform-ui": "tsx --test tests/platform-ui.test.ts tests/model-picker-refresh.test.tsx"
+    "test:platform-ui": "tsx --test tests/platform-ui.test.ts tests/model-picker-refresh.test.tsx tests/builtin-provider.test.ts tests/model-loading.test.ts tests/engine-cuda-repair.test.ts tests/web-export.test.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1152.0",

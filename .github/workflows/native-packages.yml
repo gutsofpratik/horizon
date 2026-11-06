@@ -38,6 +38,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run test:platform-ui
       - run: npm run test:contract
       - name: Prepare pinned standalone Python
         run: node scripts/release/prepare-python.mjs

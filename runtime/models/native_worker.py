@@ -13,13 +13,8 @@ os.environ['HF_HUB_DISABLE_TELEMETRY']='1'
 if os.environ.get('OPENCLAUDE_LLAMA_VARIANT')=='prism':
     from prism_runtime import activate
     activate(Path(__file__).resolve().parents[2])
-# CUDA wheels keep NVIDIA libraries in separate Python packages on Windows.
-dll_dirs=[]
-if sys.platform=='win32':
-    for root in site.getsitepackages():
-        for folder in {file.parent for file in Path(root,'nvidia').rglob('*.dll')}:
-            dll_dirs.append(os.add_dll_directory(str(folder)))
-            os.environ['PATH']=str(folder)+os.pathsep+os.environ.get('PATH','')
+from cuda_libraries import activate as activate_cuda_libraries
+activate_cuda_libraries()
 write_lock=threading.Lock();operation=threading.Lock();cancelled={}
 state={'model':None,'engine':None,'tokenizer':None,'config':None,'id':None,'decoder':None,'vision':None}
 grammar_cache={};grammar_lock=threading.Lock()
@@ -61,7 +56,9 @@ def load(args,progress):
             kv_gpu=attempt_layers!=0
             progress(f'Allocating exact {config["contextTokens"]} context · GPU layers {attempt_layers} · {cache_type} KV cache {"GPU" if kv_gpu else "CPU"}')
             try:
-                model=llama_cpp.Llama(model_path=path,n_ctx=config['contextTokens'],n_gpu_layers=attempt_layers,n_threads=raw.get('threads'),n_batch=int(raw.get('batchSize',512)),n_ubatch=int(raw.get('microBatchSize',128)),offload_kqv=kv_gpu,flash_attn=flash,swa_full=False,type_k=cache_types[cache_type],type_v=cache_types[cache_type],verbose=True)
+                from load_progress import weight_progress
+                with weight_progress(llama_cpp,progress):
+                    model=llama_cpp.Llama(model_path=path,n_ctx=config['contextTokens'],n_gpu_layers=attempt_layers,n_threads=raw.get('threads'),n_batch=int(raw.get('batchSize',512)),n_ubatch=int(raw.get('microBatchSize',128)),offload_kqv=kv_gpu,flash_attn=flash,swa_full=False,type_k=cache_types[cache_type],type_v=cache_types[cache_type],verbose=True)
                 layers=attempt_layers;break
             except Exception as error:
                 last_error=error;gc.collect()
@@ -293,7 +290,7 @@ def handle(message):
                 state.update(model=None,decoder=None,tokenizer=None,engine=None,config=None,id=None,vision=None);grammar_cache.clear();workspace_history.clear();gc.collect();emit(id,result={'status':'unloaded'});return
             if action=='load':
                 if state['model'] is not None:raise ValueError('Unload the current model first')
-                result=load(args,lambda stage:emit(id,event='progress',data={'stage':stage}));emit(id,result=result);return
+                result=load(args,lambda stage:emit(id,event='progress',data=stage if isinstance(stage,dict) else {'stage':stage}));emit(id,result=result);return
             if action=='generate':
                 if state['model'] is None or state['id']!=args['model']:raise ValueError('Selected model is not loaded')
                 emit(id,result=generate(args,id));return
