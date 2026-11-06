@@ -1,3 +1,4 @@
+import {workspaceProfiles,workspaceMode} from '../workspaces/profiles';
 import {useVoiceInput} from './useVoiceInput';
 import {isDesktopEdition} from '../platform/edition';
 import {createPortal} from 'react-dom';
@@ -60,7 +61,7 @@ export function Composer({text,setText,onSend,running,onCancel,models,settings,o
 
 
 
- <textarea className={voice.recording||voice.busy?"dictation-text":""} readOnly={voice.recording||voice.busy} ref={field} {...mentions.inputProps} aria-label="Message" placeholder={voice.recording||voice.busy?'':running?'Add a follow-up to the queue…':settings.composerMode==='goal'?'Describe your goal. I’ll work through it step by step…':layout==='welcome'?'How can I help you today?':'Write a message…'} value={voice.recording||voice.busy?[text,voice.transcript].filter(Boolean).join(' '):text} onChange={mentions.change} onKeyDown={event=>{if(voice.recording||voice.busy){if(event.key==='Enter')event.preventDefault();return;}if(mentions.keyDown(event))return;if(event.key==='Enter'&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();if(text.trim()||attachments.length)onSend();}}} onDragOver={event=>event.preventDefault()} onDrop={event=>{event.preventDefault();event.stopPropagation();onUpload([...event.dataTransfer.files]);}} rows={layout==='welcome'?2:1}/>
+ <textarea className={voice.recording||voice.busy?"dictation-text":""} readOnly={voice.recording||voice.busy} ref={field} {...mentions.inputProps} aria-label="Message" placeholder={voice.recording||voice.busy?'':running?'Add a follow-up to the queue…':settings.composerMode==='goal'?'Describe your goal. I’ll work through it step by step…':layout==='welcome'?workspaceProfiles[workspaceMode(settings.accessMode)].placeholder:'Write a message…'} value={voice.recording||voice.busy?[text,voice.transcript].filter(Boolean).join(' '):text} onChange={mentions.change} onKeyDown={event=>{if(voice.recording||voice.busy){if(event.key==='Enter')event.preventDefault();return;}if(mentions.keyDown(event))return;if(event.key==='Enter'&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();if(text.trim()||attachments.length)onSend();}}} onDragOver={event=>event.preventDefault()} onDrop={event=>{event.preventDefault();event.stopPropagation();onUpload([...event.dataTransfer.files]);}} rows={layout==='welcome'?2:1}/>
 
 
 

@@ -1,5 +1,7 @@
 name: Source quality and build checks
 on:
+  push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -20,6 +22,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - run: npm run test:contract
       - run: npm run check:tool-scenarios
       - run: npm run typecheck
       - run: npm run build:ui

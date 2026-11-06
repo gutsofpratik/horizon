@@ -1,5 +1,11 @@
 # Horizon
 
+## Chat, Work and Code workspaces
+
+Use the sidebar workspace selector for conversation and tutoring, knowledge-work deliverables, or repository-focused coding. Each conversation keeps its workspace and guidance style. Adaptive guidance, direct answers and step-by-step tutoring are selectable. Work opens files; Code opens terminal and files, with ecosystem-specific project checks. Permissions and execution-environment requirements still apply.
+
+Run `npm run test:contract` for executable regression checks and `npm run check:tool-scenarios` for the explicitly unverified inventory. See [REA evidence and limits](docs/research/2026-11-07-rea-and-workspaces.md). These checks do not certify every model or connected service.
+
 ## Shared UI across Windows, macOS, Linux, and web
 
 All editions use the same application screens and styles, including the model library, managed models, runtime packs, settings categories, Teams, Automation, connectors, and workspace tabs. The web adapter renders real shared components instead of empty placeholders. The web host registers model and inference services without granting a native desktop broker connection.

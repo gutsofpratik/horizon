@@ -20,20 +20,20 @@ export class ModelRuntime {
  private worker?:ChildProcessWithoutNullStreams;private pending=new Map<string,{resolve:(value:any)=>void;reject:(error:Error)=>void;event?:(event:any)=>void;cleanup:()=>void}>();
  loaded:any=null;status='idle';error='';private stderr='';
  private selection:Promise<any>=Promise.resolve();private selectedSignature='';private stopping:Promise<void>=Promise.resolve();private generations=0;private closed=false;
- private balancer=new ModelBalancer({ready:entry=>this.isReady(entry),capacity:()=>this.loaded?.parallelPredictions??1,activate:entry=>this.activate(entry)});
+ private balancer=new ModelBalancer({ready:entry=>this.isReady(entry),capacity:()=>this.loaded?.parallelPredictions??1,activate:(entry,signal)=>this.activate(entry,signal)});
  get balance(){return this.balancer.snapshot();}
  private signature(entry:any){return JSON.stringify([entry.id,entry.path,runtimeConfiguration(entry.path,entry.configuration,modelDefaults(this.defaults())),entry.ollama?.system]);}
  isReady(entry:any){return !!entry&&this.loaded?.modelId===entry.id&&this.selectedSignature===this.signature(entry);}
  private schedule(task:()=>Promise<any>){const operation=this.selection.catch(()=>{}).then(task);this.selection=operation;return operation;}
- private async activate(entry:any){const signature=this.signature(entry);if(this.isReady(entry))return this.loaded;if(this.generations||this.loading)throw new Error('Wait for the current model operation to finish before switching models');if(this.loaded)await this.unload();const loaded=await this.load(entry);this.selectedSignature=signature;return loaded;}
+ private async activate(entry:any,signal?:AbortSignal){const signature=this.signature(entry);if(this.isReady(entry))return this.loaded;if(this.generations||this.loading)throw new Error('Wait for the current model operation to finish before switching models');if(this.loaded)await this.unload();const loaded=await this.load(entry,signal);this.selectedSignature=signature;return loaded;}
  private loadingListeners=new Set<(modelId:string,progress:any)=>void>();
  progress:any=null;
  private reportLoading(modelId:string,progress:any){this.progress={modelId,...progress};for(const listener of this.loadingListeners)listener(modelId,this.progress);}
- select(entry:any,onProgress?:(progress:any)=>void){
+ select(entry:any,onProgress?:(progress:any)=>void,signal?:AbortSignal){
   if(this.isReady(entry))return Promise.resolve(this.loaded);
   const listener=(modelId:string,progress:any)=>{if(modelId===entry.id)onProgress?.(progress);};
   if(onProgress){this.loadingListeners.add(listener);if(this.progress?.modelId===entry.id)onProgress(this.progress);}
-  return this.balancer.run(entry,async()=>this.loaded).finally(()=>this.loadingListeners.delete(listener));
+  return this.balancer.run(entry,async()=>this.loaded,signal).finally(()=>this.loadingListeners.delete(listener));
  }
  generateFor(entry:any,args:any,event?:(event:any)=>void,signal?:AbortSignal){return this.balancer.run(entry,()=>this.dispatch('generate',args,event,signal),signal,()=>event?.({event:'chunk',data:{openclaude_phase:'queued'}}));}
  measureFor(entry:any,args:any,signal?:AbortSignal){return this.balancer.run(entry,()=>this.dispatch('measure',args,undefined,signal),signal);}
@@ -53,7 +53,8 @@ export class ModelRuntime {
   let cleaned=false;const cleanup=()=>{if(cleaned)return;cleaned=true;if(action==='generate')this.generations--;clearTimeout(timeout);signal?.removeEventListener('abort',cancel);};this.pending.set(id,{resolve,reject,event,cleanup});signal?.addEventListener('abort',cancel,{once:true});
   this.worker!.stdin.write(JSON.stringify({id,action,args})+'\n');if(signal?.aborted)cancel();
  });}
- async load(entry:any){
+ async load(entry:any,signal?:AbortSignal){
+  signal?.throwIfAborted();
   if(this.closed)throw new Error('Model runtime closed');
   if(this.loading)throw new Error('A model is already loading');
   if(this.loaded)throw new Error('Unload the current model first');
@@ -65,9 +66,9 @@ export class ModelRuntime {
    const effective=runtimeConfiguration(entry.path,config,defaults);
    await this.dispose();this.engine=engine;this.runtimeVariant=config.runtimeVariant??'stock';
    if(this.runtimeVariant==='prism'&&engine!=='llama.cpp')throw new Error('Prism requires a GGUF model and the llama.cpp engine');
-   this.status='Preparing '+engine+' runtime';this.python=await this.environment.ensure(engine,config.device);this.workerFile=engine==='transformers'?'worker.py':'native_worker.py';
-   if(this.closed)throw new Error('Model runtime closed');
-   this.loaded=await this.call('load',{path:entry.path,configuration:effective,modelId:entry.id,engine,importedSystem:entry.ollama?.system,projectorLayers:entry.ollama?.layers},event=>{this.status=event.data.stage??'loading';this.reportLoading(entry.id,{stage:this.status,percent:Number.isFinite(event.data.percent)?event.data.percent:this.progress?.percent??null});});this.selectedSignature=this.signature(entry);this.status='loaded';return this.loaded;
+   this.status='Preparing '+engine+' runtime';this.python=await this.environment.ensure(engine,config.device,signal);this.workerFile=engine==='transformers'?'worker.py':'native_worker.py';
+   signal?.throwIfAborted();if(this.closed)throw new Error('Model runtime closed');
+   this.loaded=await this.call('load',{path:entry.path,configuration:effective,modelId:entry.id,engine,importedSystem:entry.ollama?.system,projectorLayers:entry.ollama?.layers},event=>{this.status=event.data.stage??'loading';this.reportLoading(entry.id,{stage:this.status,percent:Number.isFinite(event.data.percent)?event.data.percent:this.progress?.percent??null});},signal);this.selectedSignature=this.signature(entry);this.status='loaded';return this.loaded;
   }catch(error){const details=this.stderr.slice(-1800);await this.dispose();this.status='failed';this.error=(error as Error).message+(details?'\nNative runtime details:\n'+details:'');throw new Error(this.error);}
   finally{this.loading=false;}
  } async unload(){if(this.generations||this.loading)throw new Error('Stop the current response before releasing the model');if(this.loaded)await this.call('unload');this.loaded=null;this.selectedSignature='';this.status='idle';return {status:'unloaded'};}

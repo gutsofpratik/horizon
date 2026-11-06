@@ -35,7 +35,9 @@ def load(args,progress):
         memory_before=gpu_memory()
         # Vocabulary-only inspection does not allocate the full context or expand quantized weights.
         probe=llama_cpp.Llama(model_path=path,vocab_only=True,n_ctx=128,verbose=False)
-        metadata=dict(probe.metadata);arch=metadata.get('general.architecture','');native=int(metadata.get(arch+'.context_length',2048));probe.close()
+        metadata=dict(probe.metadata);
+        if not metadata.get('tokenizer.chat_template'):probe.close();raise ValueError('This model has no chat template. Choose a chat/instruct model with its original tokenizer chat template before loading.')
+        arch=metadata.get('general.architecture','');native=int(metadata.get(arch+'.context_length',2048));probe.close()
         from auto_context import automatic_context
         available=sum(item['free'] for item in memory_before)*1024**2
         if raw.get('device')=='cpu' or not available:
@@ -92,7 +94,8 @@ def load(args,progress):
         template=metadata.get('tokenizer.chat_template','');tools='tools' in template
         protocol=detect_protocol(template)
         # Verified native protocols stream plain answers; others retain constrained fallback.
-        caps=[cap for cap in raw.get('capabilities',['tools']) if cap not in ('vision','thinking')];reasoning_supported='enable_thinking' in template or '<think>' in template
+        caps=[cap for cap in raw.get('capabilities',[]) if cap not in ('vision','thinking')];reasoning_supported='enable_thinking' in template or '<think>' in template
+        if tools and 'tools' not in caps:caps.append('tools')
         if projector:caps.append('vision')
         if reasoning_supported:caps.append('thinking')
         config['capabilities']=caps;config['reasoningMode']='native' if reasoning_supported else None;config['visionProjectorPath']=projector_path;config['visionEnabled']=bool(projector)

@@ -65,6 +65,7 @@ export function taskToolProfile(request:string,mode?:string):string[]{
  // A URL is not an instruction to control a browser. Retrieval is sufficient
  // unless the user asks for interaction or explicitly selects Browser.
  if(/https?:\/\//i.test(request)&&!chosen.includes('browser'))add('web');
+ if(/\b(?:fix|correct|repair|investigate)\b[\s\S]{0,100}\b(?:checkout|sign[ -]?in|log[ -]?in|assertions?|validation|errors?|fail(?:s|ing|ure)?|button|crash|regression)\b/i.test(request))add('code');
  const onlySearch=/\b(?:only|just)\s+(?:use\s+)?(?:the\s+)?web\s+search\b/i.test(request);
  const searchSubject=/^\s*(?:web search|search (?:for|the web)|research (?:about|on)|look up|find (?:the )?best)\b/i.test(request)&&!/[.;]\s*(?:then|also)|\b(?:(?:and|then|also)\s+(?:then\s+)?(?:create|build|edit|write|make|generate)|and then)\b/i.test(request);
  if(onlySearch||searchSubject)return ['web',...(explicitFileTask(request)?['file']:[]),...(chosen.includes('memory')?['memory']:[])];
@@ -77,7 +78,7 @@ export function makeTaskScope(request:string,mode?:string):TaskToolScope{
  for(const profile of profiles)add(profile);
  if(!profiles.length)add('web');
  if(families.has('file')){families.add('directory');families.add('archive');}
- return {version:1,profiles,families:[...families].sort(),source:mode&& !['chat','plan','goal'].includes(mode)?'explicit':'prompt'};
+ return {version:1,profiles,families:[...families].sort(),source:mode&& !['chat','plan','goal'].includes(mode)||/\b(?:only|just)\s+(?:use\s+)?(?:the\s+)?web\s+search\b/i.test(request)?'explicit':'prompt'};
 }
 export function setTaskScope(ctx:ToolContext,request:string,mode=ctx.taskMode){
  ctx.taskRequest=request;
@@ -87,6 +88,9 @@ export function setTaskScope(ctx:ToolContext,request:string,mode=ctx.taskMode){
  return ctx.taskScope;
 }
 export function scopeAllows(name:string,ctx:ToolContext):boolean{
+ // Inferred relevance ranks schemas; it must not act as an authorization gate.
+ // Explicit workflow/tool selections and the independent policy checks remain binding.
+ if(ctx.taskScope?.source==='prompt')return true;
  if(!ctx.taskScope||support.has(name)||name==='plan_read'||name==='plan_update')return true;
  // Reading installed instructions is always useful; executing a bundled script
  // additionally needs an execution/creation task, not a search-only skill grant.

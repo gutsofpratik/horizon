@@ -2,7 +2,7 @@ type Job={entry:any;task:()=>Promise<any>;resolve:(value:any)=>void;reject:(erro
 /** Admission control for native inference slots; model switches are exclusive. */
 export class ModelBalancer {
  private waiting:Job[]=[];private active=0;private activating=false;private closed=false;
- constructor(private engine:{ready:(entry:any)=>boolean;capacity:()=>number;activate:(entry:any)=>Promise<any>}){}
+ constructor(private engine:{ready:(entry:any)=>boolean;capacity:()=>number;activate:(entry:any,signal?:AbortSignal)=>Promise<any>}){}
  snapshot(){return {active:this.active,queued:this.waiting.length,capacity:Math.max(1,this.engine.capacity()),activating:this.activating};}
  run(entry:any,task:()=>Promise<any>,signal?:AbortSignal,notify?:()=>void):Promise<any>{
   if(this.closed)return Promise.reject(new Error('Model runtime closed'));
@@ -23,7 +23,7 @@ export class ModelBalancer {
    if(!this.engine.ready(job.entry)){
     if(this.active)return;
     this.activating=true;
-    void this.engine.activate(job.entry).then(()=>{this.activating=false;this.pump();},error=>{this.activating=false;const index=this.waiting.indexOf(job);if(index>=0){this.waiting.splice(index,1);job.cleanup();job.reject(error);}this.pump();});
+    void this.engine.activate(job.entry,job.signal).then(()=>{this.activating=false;this.pump();},error=>{this.activating=false;const index=this.waiting.indexOf(job);if(index>=0){this.waiting.splice(index,1);job.cleanup();job.reject(error);}this.pump();});
     return;
    }
    if(this.active>=Math.max(1,this.engine.capacity()))return;

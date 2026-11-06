@@ -1,3 +1,4 @@
+import {workspaceProfiles,workspaceMode} from '../../src/workspaces/profiles.ts';
 import {planningLocked,planGate} from '../agent/plan-approval.ts';
 import {z} from 'zod';
 import type {ToolContext,ToolRegistry} from './registry.ts';
@@ -85,7 +86,7 @@ export function modelToolDefinitions(registry:ToolRegistry,ctx:ToolContext,reque
  const add=(name:string)=>{if(byName.has(name))selected.add(name);};
  // Stable order: the requested work first, then clarification/discovery support.
  const mode=ctx.taskMode==='plan'&&!planningLocked(ctx,ctx.app.store.get('settings','main')??{})?'chat':ctx.taskMode;
- const initialProfiles=ctx.taskScope?.profiles??taskToolProfile(request,mode);
+ const inferred=ctx.taskScope?.profiles??taskToolProfile(request,mode);const initialProfiles=[...new Set([...(ctx.mode==='code'?['code']:[]),...inferred,...workspaceProfiles[workspaceMode(ctx.mode)].tools])];
  const existingArtifact=ctx.app.store.list('artifacts').some(artifact=>canAccessArtifact(artifact,ctx));
  const artifactExecution=initialProfiles.includes('code')&&existingArtifact?['artifact_read','artifact_export']:initialProfiles.includes('artifact')&&requestedArtifactRevision(ctx)?['artifact_read','artifact_save']:[];
  // Interleave workflows so a long coding catalog cannot crowd out research,
@@ -104,7 +105,7 @@ export function modelToolDefinitions(registry:ToolRegistry,ctx:ToolContext,reque
  if(selected.size<=3)for(const name of ['conversation_search','conversation_read','runtime_capabilities'])add(name);
  // Explicit discoveries remain callable even when a broad task uses its budget.
  const explicit=[...(ctx.discoveredTools??[])].filter(name=>byName.has(name)).slice(-8).reverse();
- const support=['ask_user','discover_tools','runtime_capabilities'].filter(name=>byName.has(name));const interaction=initialProfiles.includes('browser')?['browser_click','browser_snapshot','browser_press'].filter(name=>byName.has(name)):[];const codeEssentials=initialProfiles.includes('code')?['files_read','files_write','terminal_run','terminal_read'].filter(name=>byName.has(name)):[];const directoryAction=/\b(?:create|make|mkdir)\b.{0,40}\b(?:folder|directory)\b/i.test(normalizeTaskText(request))&&byName.has('directory_create')?['directory_create']:[];const fileOutput=explicitFileTask(request)?['files_write']:[];const ordered=[...new Set([...interaction,...codeEssentials,...artifactExecution,...directoryAction,...fileOutput,...explicit,...selected])].filter(name=>!support.includes(name)&&byName.has(name));return [...ordered.slice(0,12-support.length),...support].map(name=>byName.get(name)!);
+ const support=['ask_user','discover_tools','runtime_capabilities'].filter(name=>byName.has(name));const interaction=initialProfiles.includes('browser')?['browser_click','browser_snapshot','browser_press'].filter(name=>byName.has(name)):[];const codeEssentials=initialProfiles.includes('code')?['files_read','files_write','terminal_run','terminal_read'].filter(name=>byName.has(name)):[];const directoryAction=/\b(?:create|make|mkdir)\b.{0,40}\b(?:folder|directory)\b/i.test(normalizeTaskText(request))&&byName.has('directory_create')?['directory_create']:[];const fileOutput=explicitFileTask(request)?['files_write']:[];const ordered=[...new Set([...interaction,...codeEssentials,...artifactExecution,...directoryAction,...fileOutput,...explicit,...selected])].filter(name=>!support.includes(name)&&byName.has(name));return [...ordered.slice(0,24-support.length),...support].map(name=>byName.get(name)!);
 }
 export function directDiscoveryMatches(registry:ToolRegistry,ctx:ToolContext,query:string,names:string[]){
  const catalog=directToolCatalog(registry,ctx);const topic=query.toLowerCase();const words=topic.split(/\W+/).filter(word=>word.length>2);

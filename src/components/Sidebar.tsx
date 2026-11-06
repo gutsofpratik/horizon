@@ -1,3 +1,5 @@
+import {WorkspaceSwitcher} from '../workspaces/WorkspaceHome';
+import {workspaceMode} from '../workspaces/profiles';
 import {ProfileAvatar} from '../app/ProfileGate';
 import {useEffect,useState} from 'react';
 import {Users,CalendarClock,Plus,Search,Folder,Shapes,SlidersHorizontal,PanelLeftClose,Settings,Pin,Trash2,ChevronDown,Sparkles,Orbit,Leaf,Zap,Flower,Moon,Sun,Globe} from 'lucide-react';
@@ -6,14 +8,16 @@ import {api} from '../app/api';
 import {isDesktopEdition} from '../platform/edition';
 
 const profileIcons:any={spark:Sparkles,planet:Globe,leaf:Leaf,bolt:Zap,flower:Flower,moon:Moon,sun:Sun,orbit:Orbit};
-export function Sidebar({view,projects=[],conversations,selectedId,onView,onNew,onOpen,onSearch,onSettings,onProfiles,onToggle,onPin,onDelete,userName,mode='chat'}:{[key:string]:any}){
+export function Sidebar({view,projects=[],conversations,selectedId,onView,onNew,onOpen,onSearch,onSettings,onProfiles,onToggle,onPin,onDelete,userName,mode='chat',onMode,running}:{[key:string]:any}){
  const [profile,setProfile]=useState<any>(null);const [profileMenu,setProfileMenu]=useState(false);
  useEffect(()=>{if(!profileMenu)return;const close=(event:PointerEvent)=>{if(!(event.target as Element).closest(".sidebar-footer"))setProfileMenu(false);};const escape=(event:KeyboardEvent)=>{if(event.key==="Escape")setProfileMenu(false);};document.addEventListener("pointerdown",close);document.addEventListener("keydown",escape);return()=>{document.removeEventListener("pointerdown",close);document.removeEventListener("keydown",escape);};},[profileMenu]);
  useEffect(()=>{let active=true;api('/profiles/status').then((value:any)=>{if(active)setProfile(value.profile??value.activeProfile);}).catch(()=>{});return()=>{active=false;};},[]);
+ conversations=conversations.filter((chat:any)=>workspaceMode(chat.mode)===workspaceMode(mode));
  const ProfileIcon=profileIcons[profile?.avatar]??null;
  return <aside className="sidebar">
   <div className="sidebar-brand"><button className="icon-button" aria-label="Hide sidebar" onClick={onToggle}><PanelLeftClose size={18}/></button><button className="brand openclaude-brand" aria-label="Horizon" onClick={onNew}>Horizon</button></div>
   <nav>
+   <WorkspaceSwitcher mode={mode} onChange={onMode} disabled={running}/>
    <button className="sidebar-search" aria-label="Search conversations" onClick={onSearch}><Search size={14}/><span>Search</span><kbd>Ctrl K</kbd></button>
    <button className="new-chat nav-item" aria-label="New chat" onClick={onNew}><Plus size={18}/><span>New chat</span></button>
    <button className={`nav-item ${view==='projects'?'selected':''}`} onClick={()=>onView('projects')}><Folder size={18}/>Projects</button>

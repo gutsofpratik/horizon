@@ -26,7 +26,7 @@ export function compactPartition(messages:any[],activeGeneration=false){
 }
 export async function summarizeContext(older:any[],context:number,summarize:(source:string,limit:number)=>Promise<string>){
  const limit=Math.max(128,Math.min(1536,Math.floor(context*.12)));
- const chunkSize=Math.max(128,Math.floor(context*.35)-limit);
+ const chunkSize=Math.max(128,Math.floor((context*.35-limit)*3));
  // Structured roles and observed tool arguments/results are source data only.
  const source=JSON.stringify(older.filter(message=>message.role!=='system').map(({role,content,tool_calls,tool_call_id,tool_name})=>({role,content,tool_calls,tool_call_id,tool_name})));
  let summary='';for(let offset=0;offset<source.length;offset+=chunkSize){summary=await summarize(JSON.stringify({previous_summary:summary,source_fragment:source.slice(offset,offset+chunkSize),more_fragments:offset+chunkSize<source.length}),limit);if(!summary.trim())throw new Error('Context compaction returned an empty summary; original messages were retained.');}

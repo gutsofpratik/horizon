@@ -1,3 +1,4 @@
+import {projectCheckCommand} from './project-check.ts';
 import {z} from 'zod';
 import {parse} from '@babel/parser';
 import {createReadStream} from 'node:fs';
@@ -11,25 +12,25 @@ import {nativeShellIsWindows} from '../runtime/native.ts';
 
 const path=z.string().min(1).max(500).default('.');
 const ignored=new Set(['node_modules','.git','.skills','dist','build','coverage','.next','.venv','vendor']);
-async function sourceFiles(ctx:ToolContext,input:string){
+async function sourceFiles(ctx:ToolContext,input:string,offset=0){
  const root=workspaceRoot(ctx),start=await safePath(root,input),files:{path:string;text:string}[]=[];
- let entries=0,bytes=0,truncated=false;
+ let entries=0,bytes=0,truncated=false,seen=0;
  async function visit(file:string,depth:number):Promise<void>{
   if(ctx.signal.aborted)throw new ToolError('CANCELLED','Search cancelled');
   if(entries++>=3000||files.length>=300||bytes>=10_000_000||depth>12){truncated=true;return;}
-  await safePath(root,relative(root,file));const info=await stat(file);
-  if(info.isDirectory()){for(const entry of await readdir(file,{withFileTypes:true})){if(ignored.has(entry.name)||entry.isSymbolicLink())continue;await visit(join(file,entry.name),depth+1);if(entries>=3000||files.length>=300||bytes>=10_000_000)break;}}
+  await safePath(root,relative(root,file));const info=await stat(file);if(info.isFile()&&seen++<offset){entries--;return;}
+  if(info.isDirectory()){for(const entry of (await readdir(file,{withFileTypes:true})).sort((a,b)=>a.name.localeCompare(b.name))){if(ignored.has(entry.name)||entry.isSymbolicLink())continue;await visit(join(file,entry.name),depth+1);if(entries>=3000||files.length>=300||bytes>=10_000_000){truncated=true;break;}}}
   else if(info.isFile()){
    if(info.size>1_000_000||bytes+info.size>10_000_000){truncated=true;return;}
    const text=await readFile(file,'utf8');bytes+=info.size;if(!text.includes('\0'))files.push({path:relative(root,file).replaceAll('\\','/'),text});
   }
  }
- await visit(start,0);return {files,truncated,bytes};
+ await visit(start,0);return {files,truncated,bytes,nextOffset:truncated?Math.max(offset+files.length,seen):null};
 }
 export function registerCodeAdvancedTools(registry:ToolRegistry){
- registry.register({name:'code_search',capability:'workspace-file',description:'Search literal text recursively in workspace source files with line numbers. Skips dependency/build folders and symlinks; scans at most 300 files/10 MB and returns at most 100 matches.',input:z.object({path,query:z.string().min(1).max(1000),case_sensitive:z.boolean().default(false),max_results:z.number().int().min(1).max(100).default(50)}).strict(),handler:async(a,c)=>{const scanned=await sourceFiles(c,a.path),results:any[]=[];let total=0;for(const file of scanned.files)for(const [index,line] of file.text.split('\n').entries())if((a.case_sensitive?line:line.toLowerCase()).includes(a.case_sensitive?a.query:a.query.toLowerCase())){total++;if(results.length<a.max_results)results.push({path:file.path,line:index+1,text:line.slice(0,1000)});}return {results,files_scanned:scanned.files.length,truncated:scanned.truncated||total>results.length};}});
- registry.register({name:'symbol_search',capability:'workspace-file',description:'Find JavaScript/TypeScript declarations using the Babel syntax tree: functions, classes, interfaces, types, enums, methods and variables. Other languages are reported unsupported; this is syntax lookup, not cross-project reference resolution.',input:z.object({path,query:z.string().max(200).default(''),max_results:z.number().int().min(1).max(100).default(50)}).strict(),handler:async(a,c)=>{
-  const scanned=await sourceFiles(c,a.path),results:any[]=[],parse_errors:any[]=[],unsupported=new Set<string>();let total=0,parsed=0;
+ registry.register({name:'code_search',capability:'workspace-file',description:'Search literal text recursively in workspace source files with line numbers. Skips dependency/build folders and symlinks; scans at most 300 files/10 MB and returns at most 100 matches.',input:z.object({path,file_offset:z.number().int().min(0).default(0),query:z.string().min(1).max(1000),case_sensitive:z.boolean().default(false),max_results:z.number().int().min(1).max(100).default(50)}).strict(),handler:async(a,c)=>{const scanned=await sourceFiles(c,a.path,a.file_offset??0),results:any[]=[];let total=0;for(const file of scanned.files)for(const [index,line] of file.text.split('\n').entries())if((a.case_sensitive?line:line.toLowerCase()).includes(a.case_sensitive?a.query:a.query.toLowerCase())){total++;if(results.length<a.max_results)results.push({path:file.path,line:index+1,text:line.slice(0,1000)});}return {results,files_scanned:scanned.files.length,nextOffset:scanned.nextOffset,truncated:scanned.truncated||total>results.length};}});
+ registry.register({name:'symbol_search',capability:'workspace-file',description:'Find JavaScript/TypeScript declarations using the Babel syntax tree: functions, classes, interfaces, types, enums, methods and variables. Other languages are reported unsupported; this is syntax lookup, not cross-project reference resolution.',input:z.object({path,file_offset:z.number().int().min(0).default(0),query:z.string().max(200).default(''),max_results:z.number().int().min(1).max(100).default(50)}).strict(),handler:async(a,c)=>{
+  const scanned=await sourceFiles(c,a.path,a.file_offset??0),results:any[]=[],parse_errors:any[]=[],unsupported=new Set<string>();let total=0,parsed=0;
   const declarations=new Set(['FunctionDeclaration','ClassDeclaration','TSInterfaceDeclaration','TSTypeAliasDeclaration','TSEnumDeclaration','ClassMethod','ClassPrivateMethod','ObjectMethod','VariableDeclarator']);
   for(const file of scanned.files){
    c.signal.throwIfAborted();
@@ -50,8 +51,8 @@ export function registerCodeAdvancedTools(registry:ToolRegistry){
    }
    await new Promise<void>(resolve=>setImmediate(resolve));
   }
-  return {results,files_parsed:parsed,parse_errors,unsupported_extensions:[...unsupported],truncated:scanned.truncated||total>results.length};
+  return {results,files_parsed:parsed,parse_errors,unsupported_extensions:[...unsupported],nextOffset:scanned.nextOffset,truncated:scanned.truncated||total>results.length};
  }});
- for(const action of ['lint','format','test'] as const)registry.register({name:'code_'+action,capability:'terminal',available:()=>registry.tools.get('terminal_run')?.available?.()??null,description:`Run the project's existing npm ${action} script (or a named existing npm script) in the granted terminal. Returns the actual terminal job/output; use shell.read to confirm exit status. Does not install packages or claim success before completion.`,input:z.object({cwd:path,script:z.string().regex(/^[A-Za-z0-9][A-Za-z0-9:_-]{0,99}$/).default(action),timeout_ms:z.number().int().min(1000).max(300000).default(60000)}).strict(),handler:(a,c)=>{const win=nativeShellIsWindows(c);return executeGroupedLeaf(registry,'terminal_run',{command:(win?'npm.cmd':'npm')+' run '+a.script,cwd:a.cwd,timeout_ms:a.timeout_ms,interactive:false},c);}});
+ for(const action of ['lint','format','test'] as const)registry.register({name:'code_'+action,capability:'terminal',available:()=>registry.tools.get('terminal_run')?.available?.()??null,description:`Run the project's ${action} check with auto-detected npm, Cargo, Python, Go or .NET tooling. Choose runner for ambiguous projects. Returns the actual job; read it to completed exit status. No dependencies are installed.`,input:z.object({cwd:path,runner:z.enum(['auto','npm','cargo','pytest','unittest','go','dotnet']).default('auto'),script:z.string().regex(/^[A-Za-z0-9][A-Za-z0-9:_-]{0,99}$/).default(action),timeout_ms:z.number().int().min(1000).max(300000).default(60000)}).strict(),handler:async(a,c)=>{const win=nativeShellIsWindows(c);const root=await safePath(workspaceRoot(c),a.cwd);const command=await projectCheckCommand(root,action,a.runner??'auto',a.script,win);return executeGroupedLeaf(registry,'terminal_run',{command,cwd:a.cwd,timeout_ms:a.timeout_ms,interactive:false},c);}});
  registry.register({name:'files_hash',capability:'workspace-file',description:'Stream a workspace file to calculate its SHA-256 or SHA-512 hash. Files must be regular files under 256 MB; reports bytes hashed and rejects files changed during reading.',input:z.object({path:z.string().min(1).max(500),algorithm:z.enum(['sha256','sha512']).default('sha256')}).strict(),handler:async(a,c)=>{const file=await safePath(workspaceRoot(c),a.path),before=await stat(file);if(!before.isFile()||before.size>256*1024*1024)throw new ToolError('FILE_TOO_LARGE','Hash a regular file under 256 MB');const hash=createHash(a.algorithm),stream=createReadStream(file,{signal:c.signal});let bytes=0;for await(const chunk of stream){bytes+=chunk.length;if(bytes>256*1024*1024){stream.destroy();throw new ToolError('FILE_TOO_LARGE','File grew beyond 256 MB');}hash.update(chunk);}const after=await stat(file);if(before.size!==after.size||before.mtimeMs!==after.mtimeMs||before.ino!==after.ino)throw new ToolError('FILE_CONFLICT','File changed during hashing; retry');return {path:a.path,algorithm:a.algorithm,hash:hash.digest('hex'),bytes};}});
 }

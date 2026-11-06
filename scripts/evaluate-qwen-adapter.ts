@@ -1,7 +1,17 @@
+import {evaluationPassed} from '../server/models/evaluation-score.ts';
 import {isDeepStrictEqual} from 'node:util';
 import {calculate} from '../server/tools/calculate.ts';
 import {readFile,writeFile} from 'node:fs/promises';import {resolve} from 'node:path';import {ModelRuntime} from '../server/models/runtime.ts';
-const adapter=resolve(process.argv[2]),dataset=resolve(process.argv[3]),output=resolve(process.argv[4]);const api='http://127.0.0.1:3001/api';const library=await fetch(api+'/model-library').then(r=>r.json());const entry=library.models.find((model:any)=>model.id==='ollama-c50c94e6bdfc76e7e72220163dca25bdf97acdbba41cdc813f144336817b2a85');if(!entry)throw new Error('The matching Qwen3.5 9B model is missing');
+if(process.argv.length<6)throw new Error('Usage: evaluate-qwen-adapter <adapter> <dataset> <output> <model-id>. Configure HORIZON_HOST_TOKEN and, for desktop, HORIZON_PROFILE_TOKEN.');
+const adapter=resolve(process.argv[2]),dataset=resolve(process.argv[3]),output=resolve(process.argv[4]);
+const modelId=process.argv[5]??process.env.HORIZON_EVAL_MODEL_ID;if(!modelId)throw new Error('Choose an explicit model ID; no hardcoded user model is selected.');
+const api=process.env.HORIZON_API_URL??'http://127.0.0.1:3001/api';const endpoint=new URL(api);
+if(!['127.0.0.1','localhost','[::1]'].includes(endpoint.hostname)||endpoint.protocol!=='http:')throw new Error('Evaluation connects only to a local Horizon host.');
+const token=process.env.HORIZON_HOST_TOKEN;if(!token)throw new Error('HORIZON_HOST_TOKEN is required. Use the local host credential; never paste it in chat.');
+const response=await fetch(api+'/model-library',{headers:{Authorization:'Bearer '+token,...(process.env.HORIZON_PROFILE_TOKEN?{Cookie:'HorizonProfileSession='+process.env.HORIZON_PROFILE_TOKEN}:{})}});
+if(!response.ok)throw new Error('Cannot read evaluation model library (HTTP '+response.status+'); check host authentication and unlock the profile.');
+const library=await response.json();const entry=library.models.find((model:any)=>model.id===modelId);if(!entry)throw new Error('The chosen evaluation model is missing from the current profile.');
+
 const rows=(await readFile(resolve(dataset,'evaluation.jsonl'),'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(row=>{try{return JSON.parse(row.messages.at(-1).content).tool_calls.length>0;}catch{return false;}});const results:any[]=[],general:any[]=[];const runtime=new ModelRuntime(process.cwd());
 try{for(const adapted of [false,true]){
  await runtime.load({...entry,id:'qwen35-evaluation',configuration:{...entry.configuration,contextTokens:8192,device:'cuda',gpuLayers:-1,parallelPredictions:1,visionEnabled:false,temperature:0,loraAdapters:adapted?[{path:adapter,scale:1}]:[]}});
@@ -12,5 +22,5 @@ try{for(const adapted of [false,true]){
  for(const [question,expected] of [['What is 2+2? Reply with only the number.','4'],['What is the capital of France? Reply with only the city name.','Paris'],['Reply with exactly OPENCLAUDE-CHECK','OPENCLAUDE-CHECK'],['My name is Mira. Reply with only my name.','Mira']]){let text='';await runtime.call('generate',{model:'qwen35-evaluation',thinking:false,maxTokens:64,messages:[{role:'system',content:'Answer the user directly and briefly. No tools are enabled. Follow the requested output format.'},{role:'user',content:question}]},event=>{text+=event.data?.content??'';});let record=general.find(record=>record.question===question);if(!record){record={question,expected};general.push(record);}record[adapted?'adapted':'base']={text,correct:text.trim().replace(/[.!]+$/,'')===expected};}
  await runtime.unload();
 }
-const baseExact=results.filter(row=>row.base.exact).length,adaptedExact=results.filter(row=>row.adapted.exact).length;const report={scope:'Native llama.cpp synthetic workflow holdout on the actual imported Q4_K_M model; no tool actions executed',cases:results.length,baseExact,adaptedExact,nonRegression:adaptedExact>=baseExact&&general.filter(row=>row.adapted.correct).length>=general.filter(row=>row.base.correct).length,results,general};await writeFile(output,JSON.stringify(report,null,2));console.log(JSON.stringify({cases:results.length,baseExact,adaptedExact,nonRegression:report.nonRegression}));if(!report.nonRegression)process.exitCode=2;
-}finally{runtime.shutdown();}
+const baseExact=results.filter(row=>row.base.exact).length,adaptedExact=results.filter(row=>row.adapted.exact).length;const report={scope:'Native llama.cpp synthetic workflow holdout on the actual imported Q4_K_M model; no tool actions executed',cases:results.length,baseExact,adaptedExact,nonRegression:adaptedExact>=baseExact&&general.filter(row=>row.adapted.correct).length>=general.filter(row=>row.base.correct).length,passed:evaluationPassed(results.length,baseExact,adaptedExact,general.filter(row=>row.base.correct).length,general.filter(row=>row.adapted.correct).length),results,general};await writeFile(output,JSON.stringify(report,null,2));console.log(JSON.stringify({cases:results.length,baseExact,adaptedExact,nonRegression:report.nonRegression}));if(!report.passed)process.exitCode=2;
+}finally{await runtime.shutdown();}

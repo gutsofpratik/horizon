@@ -1,4 +1,4 @@
-import {readFile} from 'node:fs/promises';
+import {readFile,readdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {z} from 'zod';
@@ -21,7 +21,9 @@ try{
  const registry=createTools(app),all=[...registry.tools.values()],ajv=new Ajv2020({strict:false,validateFormats:false});
  const catalog=all.map(tool=>({name:tool.name,schema:tool.inputSchema??z.toJSONSchema(tool.input),...(isToolGroup(tool.name)?{members:all.filter(leaf=>groupForLeaf(leaf.name)===tool.name).map(leaf=>leaf.name)}:{})}));
  for(const tool of catalog)ajv.compile(tool.schema as any);
- const result=checkToolScenarios(catalog,manifest.tools,evidence);
+ const fixtureFiles=new Set<string>();for(const name of await readdir('tests',{recursive:true}))fixtureFiles.add(name.split(/[\\/]/).at(-1)!);
+ const result=checkToolScenarios(catalog,manifest.tools,evidence,fixtureFiles);
+ if(process.argv.includes('--require-evidence')&&!result.certified){console.error('Tool certification requires successful execution evidence and existing fixtures; inventory metadata alone cannot pass.');process.exitCode=1;}
  if(result.errors.length){for(const error of result.errors)console.error(error);process.exitCode=1;}
- console.log(JSON.stringify({...result,evidenceChecked:!!evidence,notice:'Code cases include controlled fixtures. Dependency-blocked tools are not certified; see their linked issues. No tool handlers are executed by this catalog check.'},null,2));
+ console.log(JSON.stringify({...result,evidenceChecked:!!evidence,notice:'This is an inventory check, not a behavioral test. Missing fixtures are reported as warnings; certified stays false without valid execution evidence. Use --require-evidence to enforce certification. No handlers are executed.'},null,2));
 }finally{await app.ephemeral.get('fileRevisions').close();store.close();}

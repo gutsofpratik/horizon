@@ -5,31 +5,46 @@ import {promisify} from 'node:util';import {join} from 'node:path';import {acces
 import {copyBundledRuntime} from './runtime-copy.ts';
 const exec=promisify(execFile);
 export class EngineEnvironment {
- status='idle';error='';log='';private installing?:Promise<string>;private profile='python';
+ status='idle';error='';log='';private installing?:Promise<string>;private profile='python';private signal?:AbortSignal;
  constructor(private root:string,private app?:AppContext){}
  get dataRoot(){return process.env.OPENCLAUDE_DATA_DIR??join(this.root,'.local');}
  get python(){return join(this.dataRoot,'inference',this.profile,process.platform==='win32'?'Scripts/python.exe':'bin/python');}
- async ensure(engine:string,device='auto'):Promise<string>{
+ async ensure(engine:string,device='auto',signal?:AbortSignal):Promise<string>{
+  signal?.throwIfAborted();
   if(!['llama.cpp','mlx','transformers','download'].includes(engine))throw new Error('Unknown runtime environment');
-  if(this.installing){await this.installing;return this.ensure(engine,device);}
-  this.installing=this.prepare(engine,device).finally(()=>{this.installing=undefined;});return this.installing;
+  if(this.installing){await this.installing;return this.ensure(engine,device,signal);}
+  this.signal=signal;this.installing=this.prepare(engine,device).finally(()=>{this.installing=undefined;});return this.installing;
  }
  private async prepare(engine:string,device:string){
   this.profile=engine==='download'?'downloads':engine==='transformers'?'transformers':'python';
   let needsCuda=device==='cuda';
-  if(device==='auto'&&process.platform!=='darwin')try{await exec('nvidia-smi',['--query-gpu=name','--format=csv,noheader'],{windowsHide:true,timeout:8000});needsCuda=true;}catch{}
+  if(device==='auto'&&process.platform!=='darwin')try{await exec('nvidia-smi',['--query-gpu=name','--format=csv,noheader'],{windowsHide:true,timeout:8000,signal:this.signal});needsCuda=true;}catch{}
   let probe:string;
   if(engine==='download')probe='import huggingface_hub;assert huggingface_hub.__version__=="2.2.0"';
   else if(engine==='transformers')probe='import torch,transformers,accelerate,psutil,lmformatenforcer;assert torch.__version__.split("+")[0]=="2.14.1";assert transformers.__version__=="5.19.0"'+(needsCuda?';assert torch.cuda.is_available(),"CUDA PyTorch cannot access the GPU; check the NVIDIA driver"':'');
   else{const module=engine==='mlx'?'mlx_lm':'llama_cpp';probe='import sys;sys.path.insert(0,'+JSON.stringify(join(this.root,'runtime/models'))+');import native_worker;import '+module+(engine==='mlx'?'':';assert '+module+'.__version__=="0.3.36"'+(needsCuda?';assert '+module+'.llama_supports_gpu_offload();assert "CUDA" in '+module+'.llama_print_system_info().decode()':''));}
-  try{await exec(this.python,['-c',probe],{windowsHide:true,timeout:30000});this.status='ready';this.error='';return this.python;}catch{}
+  try{await exec(this.python,['-c',probe],{windowsHide:true,timeout:30000,signal:this.signal});this.status='ready';this.error='';return this.python;}catch{}
+  this.signal?.throwIfAborted();
   // Repair existing CUDA wheels without downloading/replacing the model runtime.
   if(engine==='llama.cpp'&&needsCuda){
    try{await access(this.python);await this.installCudaLibraries();await this.run(this.python,['-c',probe]);this.status='ready';this.error='';return this.python;}catch{}
   }
-  return this.install(engine,needsCuda,probe);
+  this.signal?.throwIfAborted();return this.install(engine,needsCuda,probe);
  }
- private async run(command:string,args:string[]){await new Promise<void>((resolve,reject)=>{const child=spawn(command,args,{env:{...process.env,OPENCLAUDE_HOST_TOKEN:undefined},windowsHide:true,detached:process.platform!=='win32',stdio:['ignore','pipe','pipe']});if(this.app)registerOwnedProcess(this.app,child,'inference-setup',command,process.platform!=='win32');for(const stream of [child.stdout,child.stderr])stream.on('data',chunk=>{this.log=(this.log+chunk.toString()).slice(-6000);});child.on('error',reject);child.on('exit',code=>code===0?resolve():reject(new Error('Runtime setup failed: '+this.log.slice(-2000))));});}
+ private async run(command:string,args:string[]){
+  this.signal?.throwIfAborted();
+  await new Promise<void>((resolve,reject)=>{
+   const child=spawn(command,args,{env:{...process.env,OPENCLAUDE_HOST_TOKEN:undefined},windowsHide:true,detached:process.platform!=='win32',stdio:['ignore','pipe','pipe']});
+   if(this.app)registerOwnedProcess(this.app,child,'inference-setup',command,process.platform!=='win32');
+   let force:ReturnType<typeof setTimeout>|undefined;
+   const abort=()=>{if(child.pid){if(process.platform==='win32'){const killer=spawn('taskkill',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});killer.on('error',()=>child.kill());}else{try{process.kill(-child.pid,'SIGTERM');}catch{}force=setTimeout(()=>{try{process.kill(-child.pid!,'SIGKILL');}catch{}},2000);force.unref();}}};
+   const cleanup=()=>{this.signal?.removeEventListener('abort',abort);if(force)clearTimeout(force);};
+   this.signal?.addEventListener('abort',abort,{once:true});if(this.signal?.aborted)abort();
+   for(const stream of [child.stdout,child.stderr])stream.on('data',chunk=>{this.log=(this.log+chunk.toString()).slice(-6000);});
+   child.on('error',error=>{cleanup();reject(error);});
+   child.on('exit',code=>{cleanup();if(this.signal?.aborted)reject(new Error('Runtime setup cancelled'));else code===0?resolve():reject(new Error('Runtime setup failed: '+this.log.slice(-2000)));});
+  });
+ }
  private async installCudaLibraries(){
   this.status='installing';
   await this.run(this.python,['-m','pip','install','--only-binary=:all:','nvidia-cuda-runtime==13.2.86','nvidia-cublas==13.2.2.2']);
